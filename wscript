@@ -400,7 +400,7 @@ def build (ctx):
 		install_path = '${LIBDIR}'
 	)
 
-	clients = ['object', 'kv', 'item']
+	clients = ['object', 'kv', 'item', 'adios']
 
 	for client in clients:
 		use_extra = []
