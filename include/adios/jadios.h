@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_ADIOS_H
-#define JULEA_ADIOS_H
+#ifndef JULEA_ADIOS_ADIOS_H
+#define JULEA_ADIOS_ADIOS_H
 
 // #if !defined(JULEA_ITEM_H) && !defined(JULEA_ITEM_COMPILATION)
 // #error "Only <julea-item.h> can be included directly."
