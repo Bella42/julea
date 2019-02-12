@@ -78,7 +78,11 @@ int j_adios_finish(void);
 
 //FIXME use_batch -> aggregate data or not
 int j_adios_put(Metadata* metadata, void* datapointer, JBatch* batch, JSemantics* semantics, gboolean use_batch);
-void* j_adios_get(Metadata* metadata);
+int j_adios_get(Metadata* metadata, void* datapointer, JBatch* batch, JSemantics* semantics, gboolean use_batch);
+int j_adios_delete(Metadata* metadata, JBatch* batch);
+
+// void j_adios_get_status(..., JBatch*)
+
 
 G_END_DECLS
 
