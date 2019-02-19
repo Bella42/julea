@@ -115,17 +115,17 @@ int j_adios_get(Metadata* metadata, void* datapointer, JBatch* batch, JSemantics
 	// 	fprintf(stdout, "jadios: Batch execute \n");
 	// }
 
-	j_object_read(data_object, datapointer, metadata->data_size, 0, &bytes_written, batch);
-	fprintf(stdout, "Read name: %s\n", metadata->name);
+	// j_object_read(data_object, datapointer, metadata->data_size, 0, &bytes_written, batch);
+	// fprintf(stdout, "Read name: %s\n", metadata->name);
 
-	/* Create kv object*/
-	kv_object = j_kv_new("adios_get_metadata", metadata->name);
+	// /* Create kv object*/
+	// kv_object = j_kv_new("adios_get_metadata", metadata->name);
 
-	kv_data = bson_new(); //FIXME parameters
+	// kv_data = bson_new(); //FIXME parameters
 
-	// bson_append_value(kv_data, metadata->name, -1, datapointer );
-	// bson_get_data (const bson_t *bson);
-	j_kv_get(kv_object, kv_data, batch);
+	// // bson_append_value(kv_data, metadata->name, -1, datapointer );
+	// // bson_get_data (const bson_t *bson);
+	// j_kv_get(kv_object, kv_data, batch);
 
 
 	//PSEUDO kv_get(metadata->name,datapointer);
