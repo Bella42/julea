@@ -53,7 +53,7 @@ typedef struct JAdiosGetData JAdiosGetData;
 
 //DESIGN! Should every put get a new batch? should metadata and data be in the same batch?
 //DESIGN! should the semantics be passed?
-int j_adios_put(Metadata* metadata, void* datapointer, JBatch* batch, JSemantics* semantics, gboolean use_batch){
+int j_adios_put(Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch){
 
 	bson_t* kv_data;
 	g_autoptr(JKV) kv_object = NULL;
@@ -71,8 +71,14 @@ int j_adios_put(Metadata* metadata, void* datapointer, JBatch* batch, JSemantics
 		fprintf(stdout, "jadios: Batch execute \n");
 	}
 
+	float *data = data_pointer;
+	for(int i = 0; i <10; i++)
+	{
+		float test = data[i];
+		printf("Data: [%d]= %f\n",i, test );
+	}
 	//dummy -> buffer FIXME there should be some checks... probably
-	j_object_write(data_object, datapointer, metadata->data_size, 0, &bytes_written, batch);
+	j_object_write(data_object, data_pointer, metadata->data_size, 0, &bytes_written, batch);
 	fprintf(stdout, "Written name: %s\n", metadata->name);
 
 	/* Create kv object*/
@@ -85,7 +91,7 @@ int j_adios_put(Metadata* metadata, void* datapointer, JBatch* batch, JSemantics
 	* bson_append_value (b, key, (int) strlen (key), (val))
 	* key_length: The length of key in bytes, or -1 to determine the length with strlen(). */
 	// bson_append_value(kv_data, metadata->name, (int) strlen (metadata->name), datapointer );
-	bson_append_value(kv_data, metadata->name, -1, datapointer );
+	bson_append_value(kv_data, metadata->name, -1, &data_pointer );
 	j_kv_put(kv_object, kv_data, batch);
 
 
@@ -97,7 +103,7 @@ int j_adios_put(Metadata* metadata, void* datapointer, JBatch* batch, JSemantics
 	return 0;
 }
 
-int j_adios_get(Metadata* metadata, void* datapointer, JBatch* batch, JSemantics* semantics, gboolean use_batch){
+int j_adios_get(Metadata* metadata, void* datapointer, JBatch* batch, gboolean use_batch){
 	//PSEUDO return kv_get(metadata->name);
 	// bson_t* kv_data;
 	// g_autoptr(JKV) kv_object = NULL;

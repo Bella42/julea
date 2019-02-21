@@ -33,6 +33,30 @@
 
 G_BEGIN_DECLS
 
+// ordered according to ADIOSTypes.h
+enum variable_type{
+	COMPOUND,
+	UNKNOWN,
+	STRING,
+	CHAR,
+	SIGNED_CHAR,
+	UNSIGNED_CHAR,
+	SHORT,
+	UNSIGNED_SHORT,
+	INT,
+	UNSIGNED_INT,
+	LONG_INT,
+	UNSIGNED_LONG_INT,
+	LONG_LONG_INT,
+	UNSIGNED_LONG_LONG_INT,
+	FLOAT,
+	DOUBLE,
+	LONG_DOUBLE,
+	FLOAT_COMPLEX,
+	DOUBLE_COMPLEX
+};
+typedef enum variable_type variable_type;
+
 struct Metadata{
 	char* name;
 	const unsigned long* shape;
@@ -45,8 +69,9 @@ struct Metadata{
 	bool is_value;
 	const bool debug_mode;
 
-	const void *data_pointer;
+	void *data_pointer;
 	guint data_size;
+	variable_type var_type;
 	// char *min_value;
 	// float min_value_real;
 	// float min_value_complex;
@@ -77,8 +102,8 @@ int j_adios_init(JuleaInfo* julea_info); //FIXME: param needed?
 int j_adios_finish(void);
 
 //FIXME use_batch -> aggregate data or not
-int j_adios_put(Metadata* metadata, void* datapointer, JBatch* batch, JSemantics* semantics, gboolean use_batch);
-int j_adios_get(Metadata* metadata, void* datapointer, JBatch* batch, JSemantics* semantics, gboolean use_batch);
+int j_adios_put(Metadata* metadata, void* datapointer, JBatch* batch, gboolean use_batch);
+int j_adios_get(Metadata* metadata, void* datapointer, JBatch* batch, gboolean use_batch);
 int j_adios_delete(Metadata* metadata, JBatch* batch);
 
 // void j_adios_get_status(..., JBatch*)
