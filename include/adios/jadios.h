@@ -107,7 +107,7 @@ int j_adios_get(Metadata* metadata, void* datapointer, JBatch* batch, gboolean u
 int j_adios_delete(Metadata* metadata, JBatch* batch);
 
 // void j_adios_get_status(..., JBatch*)
-
+// get_all_metadata_for_enginename(space?)
 
 G_END_DECLS
 

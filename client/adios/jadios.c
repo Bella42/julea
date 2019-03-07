@@ -67,7 +67,7 @@ int j_adios_put(Metadata* metadata, void* data_pointer, JBatch* batch, gboolean 
 	fprintf(stdout, "jadios: Object create \n");
 
 	if(use_batch){
-		j_batch_execute(batch); //DESIGN: good idea?
+		j_batch_execute(batch); //DESIGN: where should this be? how often?
 		fprintf(stdout, "jadios: Batch execute \n");
 	}
 
@@ -77,6 +77,7 @@ int j_adios_put(Metadata* metadata, void* data_pointer, JBatch* batch, gboolean 
 		float test = data[i];
 		printf("Data: [%d]= %f\n",i, test );
 	}
+
 	//dummy -> buffer FIXME there should be some checks... probably
 	j_object_write(data_object, data_pointer, metadata->data_size, 0, &bytes_written, batch);
 	fprintf(stdout, "Written name: %s\n", metadata->name);
@@ -98,7 +99,7 @@ int j_adios_put(Metadata* metadata, void* data_pointer, JBatch* batch, gboolean 
 	//j_kv_unref(); //FIXME should be called somewhere
 
 	//PSEUDO kv_put(metadata->name,datapointer);
-	printf("jadios: Put\n");
+	printf("Julea Adios Client: Put\n");
 	//smd_backend_store_metadata(); //TODO Straßberger
 	return 0;
 }
@@ -135,13 +136,13 @@ int j_adios_get(Metadata* metadata, void* datapointer, JBatch* batch, gboolean u
 
 
 	//PSEUDO kv_get(metadata->name,datapointer);
-	printf("jadios: Get\n");
+	printf("Julea Adios Client: Get\n");
 	//smd_backend_get_metadata(); //TODO Straßberger
 	return NULL;
 }
 
 int j_adios_init(JuleaInfo* julea_info){
-	printf("Global Metadata Manager: Get\n");
+	printf("Julea Adios Client: Init\n");
 	// printf("YOU MANAGED TO GET TO J GMM INIT :) WUHU \n");
 	//PSEUDO create new kv
 	//create new object store
