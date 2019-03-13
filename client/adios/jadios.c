@@ -49,7 +49,8 @@
  **/
 
 
-int j_adios_init(JuleaInfo* julea_info){
+int j_adios_init(JuleaInfo* julea_info)
+{
 	printf("Julea Adios Client: Init\n");
 	// printf("YOU MANAGED TO GET TO J GMM INIT :) WUHU \n");
 	//PSEUDO create new kv
@@ -68,7 +69,8 @@ int j_adios_init(JuleaInfo* julea_info){
 	return 0;
 }
 
-int j_adios_finish(void){
+int j_adios_finish(void)
+{
 	printf("YOU MANAGED TO GET TO J GMM FINISH :) WUHU \n");
 	//PSEUDO create new kv
 	//create new object store
@@ -79,7 +81,8 @@ int j_adios_finish(void){
 
 //DESIGN! Should every put get a new batch? should metadata and data be in the same batch?
 //DESIGN! should the semantics be passed?
-int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch){
+int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch)
+{
 
 	bson_t* kv_data;
 	g_autoptr(JKV) kv_object = NULL;
@@ -92,7 +95,8 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	j_object_create(data_object, batch);
 	fprintf(stdout, "jadios: Object create \n");
 
-	if(use_batch){
+	if(use_batch)
+	{
 		j_batch_execute(batch); //DESIGN: where should this be? how often?
 		fprintf(stdout, "jadios: Batch execute \n");
 	}
@@ -115,10 +119,9 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 
 	/* short BSON HOW TO ---------
 	* http://mongoc.org/libbson/current/bson_t.html
-	* bson_append_value (b, key, (int) strlen (key), (val))
+	* bson_append_utf8 (b, key, (int) strlen (key), (val))
 	* key_length: The length of key in bytes, or -1 to determine the length with strlen(). */
-	// bson_append_value(kv_data, metadata->name, (int) strlen (metadata->name), datapointer );
-	// bson_append_utf8(kv_data, name, -1, metadata->name);
+	//TODO: check return value!
 	bson_append_int64(kv_data, "shape", -1, metadata->shape);
 	bson_append_int64(kv_data, "start", -1, metadata->start);
 	bson_append_int64(kv_data, "count", -1, metadata->count);
@@ -128,12 +131,96 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	bson_append_int64(kv_data, "data_size", -1, metadata->data_size);
 	bson_append_int64(kv_data, "var_type", -1, metadata->var_type);
 
+	/* now comes the part for "min_value" of type T in C++ */
+	if(metadata->var_type == COMPOUND)
+	{
+		//WHAT TO DO?!
+	}
+	else if(metadata->var_type == UNKNOWN)
+	{
+		//WHAT TO DO?!
+	}
+	else if(metadata->var_type == STRING)
+	{
+		// bson_append_array()?
+	}
+	else if(metadata->var_type == CHAR)
+	{
+		bson_append_int32(kv_data, "min_value", -1, metadata->min_value.integer);
+		bson_append_int32(kv_data, "max_value", -1, metadata->max_value.integer);
+		bson_append_int32(kv_data, "curr_value", -1, metadata->curr_value.integer);
+	}
+	else if(metadata->var_type == SIGNED_CHAR)
+	{
+
+	}
+	else if(metadata->var_type == UNSIGNED_CHAR)
+	{
+
+	}
+	else if(metadata->var_type == SHORT)
+	{
+
+	}
+	else if(metadata->var_type == UNSIGNED_SHORT)
+	{
+
+	}
+	else if(metadata->var_type == INT)
+	{
+		bson_append_int64(kv_data, "min_value", -1, metadata->min_value.integer);
+		bson_append_int64(kv_data, "max_value", -1, metadata->max_value.integer);
+		bson_append_int64(kv_data, "curr_value", -1, metadata->curr_value.integer);
+	}
+	else if(metadata->var_type == UNSIGNED_INT)
+	{
+
+	}
+	else if(metadata->var_type == LONG_INT)
+	{
+
+	}
+	else if(metadata->var_type == UNSIGNED_LONG_INT)
+	{
+
+	}
+	else if(metadata->var_type == LONG_LONG_INT){
+
+	}
+	else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
+	{
+		bson_append_decimal128(kv_data, "min_value", -1, metadata->min_value.ull_integer);
+		bson_append_decimal128(kv_data, "max_value", -1, metadata->max_value.ull_integer);
+		bson_append_decimal128(kv_data, "curr_value", -1, metadata->curr_value.ull_integer);
+	}
+	else if(metadata->var_type == FLOAT)
+	{
+
+	}
+	else if(metadata->var_type == DOUBLE)
+	{
+		bson_append_double(kv_data, "min_value", -1, metadata->min_value.real_double);
+		bson_append_double(kv_data, "max_value", -1, metadata->max_value.real_double);
+		bson_append_double(kv_data, "curr_value", -1, metadata->curr_value.real_double);
+	}
+	else if(metadata->var_type == LONG_DOUBLE)
+	{
+
+	}
+	else if(metadata->var_type == FLOAT_COMPLEX)
+	{
+
+	}
+	else if(metadata->var_type == DOUBLE_COMPLEX)
+	{
+
+	}
+
 	j_kv_put(kv_object, kv_data, batch);
 
 
 	//j_kv_unref(); //FIXME should be called somewhere
 
-	//PSEUDO kv_put(metadata->name,datapointer);
 	printf("Julea Adios Client: Put\n");
 	//smd_backend_store_metadata(); //TODO Straßberger
 	return 0;
@@ -144,11 +231,13 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
  * @parameters name_space name_space for variables -> string from IO.open("namespace")
  * @return names string array of variable names
  */
-int j_adios_get_all_names(char* name_space, char** names){
+int j_adios_get_all_names(char* name_space, char** names)
+{
 	return 0;
 }
 
-int j_adios_get_metadata(char* name_space, Metadata* metadata){
+int j_adios_get_metadata(char* name_space, Metadata* metadata)
+{
 	//PSEUDO return kv_get(metadata->name);
 	// bson_t* kv_data;
 	// g_autoptr(JKV) kv_object = NULL;
@@ -185,12 +274,14 @@ int j_adios_get_metadata(char* name_space, Metadata* metadata){
 	return NULL;
 }
 
-int j_adios_get_data(char* name_space, char* variable_name, void* datapointer, JBatch* batch, gboolean use_batch){
+int j_adios_get_data(char* name_space, char* variable_name, void* datapointer, JBatch* batch, gboolean use_batch)
+{
 	return 0;
 }
 
 
-int j_adios_delete(char* name_space, Metadata* metadata, JBatch* batch){
+int j_adios_delete(char* name_space, Metadata* metadata, JBatch* batch)
+{
 	//j_kv_delete (JKV*, JBatch*);
 	//j_adios_get()
 	// j_kv_delete(object, batch);
