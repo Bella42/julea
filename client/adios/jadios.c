@@ -49,11 +49,37 @@
  **/
 
 
-typedef struct JAdiosGetData JAdiosGetData;
+int j_adios_init(JuleaInfo* julea_info){
+	printf("Julea Adios Client: Init\n");
+	// printf("YOU MANAGED TO GET TO J GMM INIT :) WUHU \n");
+	//PSEUDO create new kv
+	//create new object store
+	//DESIGN: additional parameters needed?s
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JSemantics) semantics = NULL;
+	g_autoptr(JObject) object = NULL;
+
+	g_autofree gchar* name = NULL;
+	JOperation* op_write = NULL;
+	gboolean use_batch = false;
+	semantics = j_semantics_new (J_SEMANTICS_TEMPLATE_POSIX);
+
+
+	return 0;
+}
+
+int j_adios_finish(void){
+	printf("YOU MANAGED TO GET TO J GMM FINISH :) WUHU \n");
+	//PSEUDO create new kv
+	//create new object store
+	//DESIGN: additional parameters needed?s
+
+	return 0;
+}
 
 //DESIGN! Should every put get a new batch? should metadata and data be in the same batch?
 //DESIGN! should the semantics be passed?
-int j_adios_put(Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch){
+int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch){
 
 	bson_t* kv_data;
 	g_autoptr(JKV) kv_object = NULL;
@@ -92,7 +118,16 @@ int j_adios_put(Metadata* metadata, void* data_pointer, JBatch* batch, gboolean 
 	* bson_append_value (b, key, (int) strlen (key), (val))
 	* key_length: The length of key in bytes, or -1 to determine the length with strlen(). */
 	// bson_append_value(kv_data, metadata->name, (int) strlen (metadata->name), datapointer );
-	bson_append_value(kv_data, metadata->name, -1, &data_pointer );
+	// bson_append_utf8(kv_data, name, -1, metadata->name);
+	bson_append_int64(kv_data, "shape", -1, metadata->shape);
+	bson_append_int64(kv_data, "start", -1, metadata->start);
+	bson_append_int64(kv_data, "count", -1, metadata->count);
+	bson_append_int64(kv_data, "steps_start", -1, metadata->steps_start);
+	bson_append_int64(kv_data, "steps_count", -1, metadata->steps_count);
+	bson_append_bool(kv_data, "is_value", -1, metadata->is_value);
+	bson_append_int64(kv_data, "data_size", -1, metadata->data_size);
+	bson_append_int64(kv_data, "var_type", -1, metadata->var_type);
+
 	j_kv_put(kv_object, kv_data, batch);
 
 
@@ -104,7 +139,16 @@ int j_adios_put(Metadata* metadata, void* data_pointer, JBatch* batch, gboolean 
 	return 0;
 }
 
-int j_adios_get(Metadata* metadata, void* datapointer, JBatch* batch, gboolean use_batch){
+/**
+ * Returns all variable names currently held in KV store.
+ * @parameters name_space name_space for variables -> string from IO.open("namespace")
+ * @return names string array of variable names
+ */
+int j_adios_get_all_names(char* name_space, char** names){
+	return 0;
+}
+
+int j_adios_get_metadata(char* name_space, Metadata* metadata){
 	//PSEUDO return kv_get(metadata->name);
 	// bson_t* kv_data;
 	// g_autoptr(JKV) kv_object = NULL;
@@ -141,35 +185,12 @@ int j_adios_get(Metadata* metadata, void* datapointer, JBatch* batch, gboolean u
 	return NULL;
 }
 
-int j_adios_init(JuleaInfo* julea_info){
-	printf("Julea Adios Client: Init\n");
-	// printf("YOU MANAGED TO GET TO J GMM INIT :) WUHU \n");
-	//PSEUDO create new kv
-	//create new object store
-	//DESIGN: additional parameters needed?s
-	g_autoptr(JBatch) batch = NULL;
-	g_autoptr(JSemantics) semantics = NULL;
-	g_autoptr(JObject) object = NULL;
-
-	g_autofree gchar* name = NULL;
-	JOperation* op_write = NULL;
-	gboolean use_batch = false;
-	semantics = j_semantics_new (J_SEMANTICS_TEMPLATE_POSIX);
-
-
+int j_adios_get_data(char* name_space, char* variable_name, void* datapointer, JBatch* batch, gboolean use_batch){
 	return 0;
 }
 
-int j_adios_finish(void){
-	printf("YOU MANAGED TO GET TO J GMM FINISH :) WUHU \n");
-	//PSEUDO create new kv
-	//create new object store
-	//DESIGN: additional parameters needed?s
 
-	return 0;
-}
-
-int j_adios_delete(Metadata* metadata, JBatch* batch){
+int j_adios_delete(char* name_space, Metadata* metadata, JBatch* batch){
 	//j_kv_delete (JKV*, JBatch*);
 	//j_adios_get()
 	// j_kv_delete(object, batch);

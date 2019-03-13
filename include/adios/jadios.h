@@ -28,6 +28,7 @@
 // #endif
 
 #include <glib.h>
+#include <complex.h>
 
 #include <julea.h>
 
@@ -57,6 +58,30 @@ enum variable_type{
 };
 typedef enum variable_type variable_type;
 
+//to pass, e.g. "float min_value" an actual c type is needed
+union value_type{
+	//compound?!
+	//unknown?!
+	char *string;						//probably dangerous when passing from c++
+	char character;
+	signed char s_character;
+	unsigned char u_character;
+	short shorter;
+	unsigned short u_shorter;
+	int integer;
+	unsigned int u_integer;
+	long int l_integer;
+	unsigned long int ul_integer;
+	long long int ll_integer;
+	unsigned long long int ull_integer;
+	float real_float;
+	double real_double;
+	long double lreal_double;
+	float complex float_complex;	//inconsistent naming I know; sorry real_float_complex is not great either
+	double complex double_complex;
+};
+typedef union value_type value_type;
+
 struct Metadata{
 	char* name;
 	const unsigned long* shape;
@@ -67,23 +92,14 @@ struct Metadata{
 	size_t steps_count;
 	bool constant_shape;
 	bool is_value;
-	const bool debug_mode;
 
-	void *data_pointer;
 	guint data_size;
 	variable_type var_type;
-	// char *min_value;
-	// float min_value_real;
-	// float min_value_complex;
-	// float max_value_real;
-	// float max_value_complex;
-	// float curr_value_real;
-	// float curr_value_complex;
-	//variable type //DESIGN: needed to know what type max, min and current are
-	//max value
-	//min value
-	//current value
-	//is value
+
+	union value_type min_value;
+	union value_type max_value;
+	union value_type curr_value;
+
 	//operations -> how are these used? necessary for structured backend?
 	//std::map<size_t, std::vector<helper::SubStreamBoxInfo>>
     //        StepBlockSubStreamsInfo;
@@ -101,10 +117,17 @@ typedef struct JuleaInfo JuleaInfo;
 int j_adios_init(JuleaInfo* julea_info); //FIXME: param needed?
 int j_adios_finish(void);
 
-//FIXME use_batch -> aggregate data or not
-int j_adios_put(Metadata* metadata, void* datapointer, JBatch* batch, gboolean use_batch);
-int j_adios_get(Metadata* metadata, void* datapointer, JBatch* batch, gboolean use_batch);
-int j_adios_delete(Metadata* metadata, JBatch* batch);
+//DESIGN use_batch -> aggregate data or not
+/* performs data put AND metadata put*/
+int j_adios_put(char* name_space, Metadata* metadata, void* datapointer, JBatch* batch, gboolean use_batch);
+/* get data from object store*/
+int j_adios_get_data(char* name_space, char* variable_name, void* datapointer, JBatch* batch, gboolean use_batch);
+
+int j_adios_get_all_names(char* name_space, char** names);
+/* get metadata from kv store; hopefully soon from SMD backend*/
+int j_adios_get_metadata(char* name_space, Metadata* metadata);
+
+int j_adios_delete(char* name_space, Metadata* metadata, JBatch* batch);
 
 // void j_adios_get_status(..., JBatch*)
 // get_all_metadata_for_enginename(space?)
