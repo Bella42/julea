@@ -123,9 +123,9 @@ int j_adios_put(char* name_space, Metadata* metadata, void* datapointer, JBatch*
 /* get data from object store*/
 int j_adios_get_data(char* name_space, char* variable_name, void* datapointer, JBatch* batch, gboolean use_batch);
 
-int j_adios_get_all_names(char* name_space, char** names);
+int j_adios_get_all_var_names(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics);
 /* get metadata from kv store; hopefully soon from SMD backend*/
-int j_adios_get_metadata(char* name_space, Metadata* metadata);
+int j_adios_get_metadata(char* name_space, Metadata** metadata);
 
 int j_adios_delete(char* name_space, Metadata* metadata, JBatch* batch);
 
