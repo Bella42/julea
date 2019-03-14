@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2018 Michael Kuhn
+ * Copyright (C) 2010-2019 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -78,6 +78,35 @@ jd_safety_message_to_semantics (JMessageFlags flags)
 	}
 
 	return safety;
+}
+
+static
+guint64
+jd_object_write_chunked (JStatistics* statistics, GInputStream* input, gpointer object, gpointer buffer, guint64 buffer_length, guint64 length, guint64 offset)
+{
+	guint64 bytes_written = 0;
+
+	// Split operation into chunks if necessary
+	while (length > 0)
+	{
+		guint64 chunk_length;
+		guint64 tmp;
+
+		chunk_length = MIN(length, buffer_length);
+
+		g_input_stream_read_all(input, buffer, chunk_length, NULL, NULL, NULL);
+		j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, chunk_length);
+
+		j_backend_object_write(jd_object_backend, object, buffer, chunk_length, offset, &tmp);
+		j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, tmp);
+
+		length -= chunk_length;
+		offset += chunk_length;
+
+		bytes_written += tmp;
+	}
+
+	return bytes_written;
 }
 
 static
@@ -219,6 +248,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						length = j_message_get_8(message);
 						offset = j_message_get_8(message);
 
+						// FIXME Handle operations with length > J_STRIPE_SIZE
 						buf = j_memory_chunk_get(memory_chunk, length);
 
 						if (buf == NULL)
@@ -293,13 +323,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						}
 						else if (merge_length > 0)
 						{
-							guint64 bytes_written = 0;
-
-							g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
-							j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
-
-							j_backend_object_write(jd_object_backend, object, buf, merge_length, merge_offset, &bytes_written);
-							j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
+							jd_object_write_chunked(statistics, input, object, buf, J_STRIPE_SIZE, merge_length, merge_offset);
 
 							merge_length = 0;
 							merge_offset = 0;
@@ -321,13 +345,7 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					if (merge_length > 0)
 					{
-						guint64 bytes_written = 0;
-
-						g_input_stream_read_all(input, buf, merge_length, NULL, NULL, NULL);
-						j_statistics_add(statistics, J_STATISTICS_BYTES_RECEIVED, merge_length);
-
-						j_backend_object_write(jd_object_backend, object, buf, merge_length, merge_offset, &bytes_written);
-						j_statistics_add(statistics, J_STATISTICS_BYTES_WRITTEN, bytes_written);
+						jd_object_write_chunked(statistics, input, object, buf, J_STRIPE_SIZE, merge_length, merge_offset);
 					}
 
 					if (type_modifier & J_MESSAGE_FLAGS_SAFETY_STORAGE)

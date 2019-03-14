@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2018 Michael Kuhn
+ * Copyright (C) 2010-2019 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -155,8 +155,16 @@ backend_status (gpointer data, gint64* modification_time, guint64* size)
 
 	// FIXME
 	ret = TRUE;
-	*modification_time = 0;
-	*size = 0;
+
+	if (modification_time != NULL)
+	{
+		*modification_time = 0;
+	}
+
+	if (size != NULL)
+	{
+		*size = 0;
+	}
 
 	return ret;
 }

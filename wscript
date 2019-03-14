@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # JULEA - Flexible storage framework
-# Copyright (C) 2010-2018 Michael Kuhn
+# Copyright (C) 2010-2019 Michael Kuhn
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
@@ -423,7 +423,7 @@ def build (ctx):
 	ctx.program(
 		source = ctx.path.ant_glob('test/**/*.c'),
 		target = 'test/julea-test',
-		use = use_julea_core + ['lib/julea', 'lib/julea-item'],
+		use = use_julea_core + ['lib/julea', 'lib/julea-object', 'lib/julea-item'],
 		includes = ['include', 'test'],
 		rpath = get_rpath(ctx),
 		install_path = None

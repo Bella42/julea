@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2018 Michael Kuhn
+ * Copyright (C) 2017-2019 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -358,7 +358,7 @@ j_object_read_exec (JList* operations, JSemantics* semantics)
 	{
 		JObjectOperation* operation = j_list_get_first(operations);
 
-		object = operation->status.object;
+		object = operation->read.object;
 
 		g_assert(operation != NULL);
 		g_assert(object != NULL);
@@ -521,7 +521,7 @@ j_object_write_exec (JList* operations, JSemantics* semantics)
 	{
 		JObjectOperation* operation = j_list_get_first(operations);
 
-		object = operation->status.object;
+		object = operation->write.object;
 
 		g_assert(operation != NULL);
 		g_assert(object != NULL);
@@ -741,8 +741,15 @@ j_object_status_exec (JList* operations, JSemantics* semantics)
 			modification_time_ = j_message_get_8(reply);
 			size_ = j_message_get_8(reply);
 
-			*modification_time = modification_time_;
-			*size = size_;
+			if (modification_time != NULL)
+			{
+				*modification_time = modification_time_;
+			}
+
+			if (size != NULL)
+			{
+				*size = size_;
+			}
 		}
 
 		j_list_iterator_free(it);

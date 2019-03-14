@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2017-2018 Michael Kuhn
+ * Copyright (C) 2017-2019 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -456,9 +456,16 @@ j_distributed_object_status_background_operation (gpointer data)
 		modification_time_ = j_message_get_8(reply);
 		size_ = j_message_get_8(reply);
 
-		// FIXME
-		*modification_time = modification_time_;
-		j_helper_atomic_add(size, size_);
+		if (modification_time != NULL)
+		{
+			// FIXME max?
+			*modification_time = modification_time_;
+		}
+
+		if (size != NULL)
+		{
+			j_helper_atomic_add(size, size_);
+		}
 	}
 
 	j_message_unref(background_data->message);
@@ -703,7 +710,7 @@ j_distributed_object_read_exec (JList* operations, JSemantics* semantics)
 		JDistributedObjectOperation* operation = j_list_get_first(operations);
 		g_assert(operation != NULL);
 
-		object = operation->status.object;
+		object = operation->read.object;
 		g_assert(object != NULL);
 	}
 
@@ -878,7 +885,7 @@ j_distributed_object_write_exec (JList* operations, JSemantics* semantics)
 		JDistributedObjectOperation* operation = j_list_get_first(operations);
 		g_assert(operation != NULL);
 
-		object = operation->status.object;
+		object = operation->write.object;
 		g_assert(object != NULL);
 	}
 
