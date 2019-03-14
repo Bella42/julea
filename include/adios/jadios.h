@@ -119,9 +119,9 @@ int j_adios_finish(void);
 
 //DESIGN use_batch -> aggregate data or not
 /* performs data put AND metadata put*/
-int j_adios_put(char* name_space, Metadata* metadata, void* datapointer, JBatch* batch, gboolean use_batch);
+int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch);
 /* get data from object store*/
-int j_adios_get_data(char* name_space, char* variable_name, void* datapointer, JBatch* batch, gboolean use_batch);
+int j_adios_get_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);
 
 int j_adios_get_all_var_names(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics);
 /* get metadata from kv store; hopefully soon from SMD backend*/

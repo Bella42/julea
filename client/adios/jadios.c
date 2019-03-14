@@ -61,7 +61,7 @@ int j_adios_init(JuleaInfo* julea_info)
 	g_autoptr(JObject) object = NULL;
 
 	g_autofree gchar* name = NULL;
-	JOperation* op_write = NULL;
+	// JOperation* op_write = NULL;
 	gboolean use_batch = false;
 	semantics = j_semantics_new (J_SEMANTICS_TEMPLATE_POSIX);
 
@@ -91,22 +91,22 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 
 	g_autoptr(JKV) kv_object_metadata = NULL;
 	g_autoptr(JKV) kv_object_names = NULL;
-	// g_autoptr(JKV) kv_object_count_names = NULL;
 	g_autoptr(JObject) data_object = NULL;
+	// g_autoptr(JKV) kv_object_count_names = NULL;
 
-	JOperation* op_write = NULL;
 	guint64 bytes_written = 0; //nb = bytes written; see benchmark
 
-	gchar *metadata_kv;
-	gchar *names_kv;
+	gchar *name_metadata_kv;
+	gchar *name_names_kv;
+	gchar *name_data_object;
 	// gchar *count_names_kv;
 
 	batch2 = j_batch_new(j_batch_get_semantics(batch1));
-	/* Create data object */
-	data_object = j_object_new("adios_data", metadata->name);
-	j_object_create(data_object, batch1);
-	fprintf(stdout, "Julea Adios Client: Object create \n");
 
+	name_data_object = g_strdup_printf("%s_%s", name_space, metadata->name);
+	data_object = j_object_new("adios_data", name_data_object);
+	j_object_create(data_object, batch1);
+	printf("Julea Adios Client: Object create \n");
 
 	float *data = data_pointer;
 	for(int i = 0; i <10; i++)
@@ -115,17 +115,24 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 		printf("Data: [%d]= %f\n",i, test );
 	}
 
-	//dummy -> buffer FIXME there should be some checks... probably
 	j_object_write(data_object, data_pointer, metadata->data_size, 0, &bytes_written, batch1);
-	fprintf(stdout, "Written name: %s\n", metadata->name);
 
-	metadata_kv = g_strdup_printf("%s_%s", name_space, metadata->name);
-	names_kv = g_strdup_printf("names_%s", name_space);
+	if(bytes_written, metadata->data_size)
+	{
+		printf("Julea Adios Client: Written data for variable '%s' \n", metadata->name);
+	}
+	else
+	{
+		printf("WARNING: only %d bytes written instead of %d bytes! \n",bytes_written , metadata->data_size);
+	}
+
+	name_metadata_kv = g_strdup_printf("%s_%s", name_space, metadata->name);
+	name_names_kv = g_strdup_printf("names_%s", name_space);
 	// count_names_kv = g_strdup_printf("adios_count_names_kv_%s", name_space);
 
 	/* Create kv object*/
-	kv_object_metadata = j_kv_new("adios_metadata", metadata_kv);
-	kv_object_names = j_kv_new("adios_variable_names", names_kv);
+	kv_object_metadata = j_kv_new("adios_metadata", name_metadata_kv);
+	kv_object_names = j_kv_new("adios_variable_names", name_names_kv);
 	// kv_object_count_names = j_kv_new("adios_count_variable_names", count_names_kv);
 
 
@@ -263,7 +270,7 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	if(use_batch)
 	{
 		j_batch_execute(batch1); //DESIGN: where should this be? how often?
-		fprintf(stdout, "Julea Adios Client: Batch execute \n");
+		printf("Julea Adios Client: Batch execute \n");
 	}
 
 	printf("Julea Adios Client: Put\n");
@@ -436,46 +443,29 @@ int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* seman
 	return 0;
 }
 
-// int j_adios_get_metadata(char* name_space, Metadata** metadata)
-// {
-	//PSEUDO return kv_get(metadata->name);
-	// bson_t* bson_meta_data;
-	// g_autoptr(JKV) kv_object = NULL;
-	// g_autoptr(JObject) data_object = NULL;
-	// JOperation* op_write = NULL;
-	// guint64 bytes_written = 0; //nb = bytes written; see benchmark
-
-	// /* Create data object */
-	// data_object = j_object_new("adios_put_data", metadata->name);
-	// j_object_create(data_object, batch);
-	// fprintf(stdout, "jadios: Object create \n");
-
-	// if(use_batch){
-	// 	j_batch_execute(batch); //DESIGN: good idea?
-	// 	fprintf(stdout, "jadios: Batch execute \n");
-	// }
-
-	// j_object_read(data_object, datapointer, metadata->data_size, 0, &bytes_written, batch);
-	// fprintf(stdout, "Read name: %s\n", metadata->name);
-
-	// /* Create kv object*/
-	// kv_object = j_kv_new("adios_get_metadata", metadata->name);
-
-	// bson_meta_data = bson_new(); //FIXME parameters
-
-	// // bson_append_value(bson_meta_data, metadata->name, -1, datapointer );
-	// // bson_get_data (const bson_t *bson);
-	// j_kv_get(kv_object, bson_meta_data, batch);
-
-
-	//PSEUDO kv_get(metadata->name,datapointer);
-	// printf("Julea Adios Client: Get\n");
-	//smd_backend_get_metadata(); //TODO Straßberger
-	// return NULL;
-// }
-
-int j_adios_get_data(char* name_space, char* variable_name, void* datapointer, JBatch* batch, gboolean use_batch)
+int j_adios_get_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch)
 {
+	guint64 bytes_read = 0; //nb = bytes written; see benchmark
+	g_autoptr(JObject) data_object = NULL;
+	gchar *name_data_object;
+	name_data_object = g_strdup_printf("%s_%s", name_space,variable_name);
+
+	data_object = j_object_new("adios_data", name_data_object);
+	j_object_read(data_object, data_pointer, length, 0, &bytes_read, batch);
+	if(bytes_read, length)
+	{
+		printf("Julea Adios Client: Read data for variable '%s' \n", variable_name);
+	}
+	else
+	{
+		printf("WARNING: only %d bytes read instead of %d bytes! \n",bytes_read, length);
+	}
+
+	if(use_batch)
+	{
+		j_batch_execute(batch); //DESIGN: where should this be? how often?
+		printf("Julea Adios Client: Batch execute \n");
+	}
 	return 0;
 }
 
