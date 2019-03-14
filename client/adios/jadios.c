@@ -52,19 +52,15 @@
 int j_adios_init(JuleaInfo* julea_info)
 {
 	printf("Julea Adios Client: Init\n");
-	// printf("YOU MANAGED TO GET TO J GMM INIT :) WUHU \n");
-	//PSEUDO create new kv
-	//create new object store
+
 	//DESIGN: additional parameters needed?s
-	g_autoptr(JBatch) batch = NULL;
-	g_autoptr(JSemantics) semantics = NULL;
-	g_autoptr(JObject) object = NULL;
+	// g_autoptr(JBatch) batch = NULL;
+	// g_autoptr(JSemantics) semantics = NULL;
+	// g_autoptr(JObject) object = NULL;
 
-	g_autofree gchar* name = NULL;
-	// JOperation* op_write = NULL;
-	gboolean use_batch = false;
-	semantics = j_semantics_new (J_SEMANTICS_TEMPLATE_POSIX);
-
+	// g_autofree gchar* name = NULL;
+	// gboolean use_batch = false;
+	julea_info->semantics = j_semantics_new (J_SEMANTICS_TEMPLATE_POSIX);
 
 	return 0;
 }
@@ -80,10 +76,18 @@ int j_adios_finish(void)
 }
 
 //DESIGN! Should every put get a new batch? should metadata and data be in the same batch?
-//DESIGN! should the semantics be passed?
-int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch1, gboolean use_batch)
+/**
+ * Put data and the according metadata. There is no separate function for putting only the metadata.
+ * @param  name_space   namespace of the variable; defined by io.open("namespace")
+ * @param  metadata     metadata struct containing the information to store in kv
+ * @param  data_pointer data to be stored in object store
+ * @param  batch 		batch to execute the operation in
+ * @param  use_batch    pass false when using deferred/asynchronous I/O; true for synchronous I/O
+ * @return              return 0 on success
+ */
+int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch)
 {
-	JBatch *batch2;
+	JBatch *batch_2;
 	bson_iter_t *b_iter;
 	bson_t* bson_meta_data;
 	bson_t* bson_names;
@@ -101,11 +105,11 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	gchar *name_data_object;
 	// gchar *count_names_kv;
 
-	batch2 = j_batch_new(j_batch_get_semantics(batch1));
+	batch_2 = j_batch_new(j_batch_get_semantics(batch));
 
 	name_data_object = g_strdup_printf("%s_%s", name_space, metadata->name);
 	data_object = j_object_new("adios_data", name_data_object);
-	j_object_create(data_object, batch1);
+	j_object_create(data_object, batch);
 	printf("Julea Adios Client: Object create \n");
 
 	float *data = data_pointer;
@@ -115,7 +119,7 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 		printf("Data: [%d]= %f\n",i, test );
 	}
 
-	j_object_write(data_object, data_pointer, metadata->data_size, 0, &bytes_written, batch1);
+	j_object_write(data_object, data_pointer, metadata->data_size, 0, &bytes_written, batch);
 
 	if(bytes_written, metadata->data_size)
 	{
@@ -130,7 +134,6 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	name_names_kv = g_strdup_printf("names_%s", name_space);
 	// count_names_kv = g_strdup_printf("adios_count_names_kv_%s", name_space);
 
-	/* Create kv object*/
 	kv_object_metadata = j_kv_new("adios_metadata", name_metadata_kv);
 	kv_object_names = j_kv_new("adios_variable_names", name_names_kv);
 	// kv_object_count_names = j_kv_new("adios_count_variable_names", count_names_kv);
@@ -140,8 +143,8 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	bson_names = bson_new();
 	// bson_count_names = bson_new();
 
-	j_kv_get(kv_object_names, bson_names, batch2);
-	j_batch_execute(batch2);
+	j_kv_get(kv_object_names, bson_names, batch_2);
+	j_batch_execute(batch_2);
 
 	/* check if variable name is already in kv store */
 	if(!b_iter_init_find(b_iter, bson_names, metadata->name))
@@ -263,13 +266,13 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 
 	}
 
-	j_kv_put(kv_object_metadata, bson_meta_data, batch1);
-	j_kv_put(kv_object_names, bson_names, batch1);
-	// j_kv_put(kv_object_count_names, bson_count_names, batch1);
+	j_kv_put(kv_object_metadata, bson_meta_data, batch);
+	j_kv_put(kv_object_names, bson_names, batch);
+	// j_kv_put(kv_object_count_names, bson_count_names, batch);
 
 	if(use_batch)
 	{
-		j_batch_execute(batch1); //DESIGN: where should this be? how often?
+		j_batch_execute(batch); //DESIGN: where should this be? how often?
 		printf("Julea Adios Client: Batch execute \n");
 	}
 
@@ -282,6 +285,14 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
  * Returns all variable names currently held in KV store.
  * @parameters name_space name_space for variables -> string from IO.open("namespace")
  * @return names string array of variable names
+ */
+/**
+ * Get all variable names for the passed namespace.
+ * @param  name_space  namespace of the variables; defined by io.open("namespace")
+ * @param  names       array to store the retrieved names
+ * @param  count_names number of names to retrieve
+ * @param  semantics   semantics to be used
+ * @return             returns 0 on success
  */
 int j_adios_get_all_var_names(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics)
 {
@@ -311,7 +322,16 @@ int j_adios_get_all_var_names(char* name_space, char*** names, unsigned int coun
 	return 0;
 }
 
-/* The name member of the Metadata struct needs to be set!*/
+/**
+ * Get the metadata from the kv store the passed variable.
+ * The name member of the Metadata struct needs to be set since it is the key!
+ * DESIGN: use julea_info struct which contains semantics?
+ *
+ * @param  name_space namespace of the variable
+ * @param  metadata   metadata information struct; needs to be allocated
+ * @param  semantics  semantics to be used
+ * @return            returns 0 on success
+ */
 int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* semantics)
 {
 	JBatch* batch;
@@ -443,6 +463,16 @@ int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* seman
 	return 0;
 }
 
+/**
+ * Get the data for the passed variable from object store
+ * @param  name_space    namespace of variable; defined in io.open("namespace")
+ * @param  variable_name name of variable
+ * @param  length        number of bytes to read
+ * @param  data_pointer  pointer to return data
+ * @param  batch         batch to execute this operation in
+ * @param  use_batch     pass false when using deferred/asynchronous I/O; true for synchronous I/O
+ * @return               returns 0 on success
+ */
 int j_adios_get_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch)
 {
 	guint64 bytes_read = 0; //nb = bytes written; see benchmark

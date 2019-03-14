@@ -84,7 +84,7 @@ typedef union value_type value_type;
 
 struct Metadata{
 	char* name;
-	const unsigned long* shape;	//TODO:is it sensible to have this as pointer?
+	const unsigned long* shape;
 	const unsigned long*  start;
 	const unsigned long*  count;
 
@@ -108,13 +108,13 @@ typedef struct Metadata Metadata;
 
 struct JuleaInfo{
 	JSemantics* semantics;
-	//FIXME: should every io op get a new batch?
+	//DESIGN: should every io op get a new batch?
 	//where should this be decided in adios? probably...
 
 };
 typedef struct JuleaInfo JuleaInfo;
 
-int j_adios_init(JuleaInfo* julea_info); //FIXME: param needed?
+int j_adios_init(JuleaInfo* julea_info); //DESIGN: param needed?
 int j_adios_finish(void);
 
 //DESIGN use_batch -> aggregate data or not
