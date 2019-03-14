@@ -84,7 +84,7 @@ typedef union value_type value_type;
 
 struct Metadata{
 	char* name;
-	const unsigned long* shape;
+	const unsigned long* shape;	//TODO:is it sensible to have this as pointer?
 	const unsigned long*  start;
 	const unsigned long*  count;
 
@@ -125,7 +125,7 @@ int j_adios_get_data(char* name_space, char* variable_name, void* datapointer, J
 
 int j_adios_get_all_var_names(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics);
 /* get metadata from kv store; hopefully soon from SMD backend*/
-int j_adios_get_metadata(char* name_space, Metadata** metadata);
+int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* semantics);
 
 int j_adios_delete(char* name_space, Metadata* metadata, JBatch* batch);
 

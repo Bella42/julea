@@ -103,7 +103,7 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 
 	batch2 = j_batch_new(j_batch_get_semantics(batch1));
 	/* Create data object */
-	data_object = j_object_new("adios_put_data", metadata->name);
+	data_object = j_object_new("adios_data", metadata->name);
 	j_object_create(data_object, batch1);
 	fprintf(stdout, "Julea Adios Client: Object create \n");
 
@@ -119,12 +119,12 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	j_object_write(data_object, data_pointer, metadata->data_size, 0, &bytes_written, batch1);
 	fprintf(stdout, "Written name: %s\n", metadata->name);
 
-	metadata_kv = g_strdup_printf("adios_metadata_kv_%s", name_space);
-	names_kv = g_strdup_printf("adios_names_kv_%s", name_space);
+	metadata_kv = g_strdup_printf("%s_%s", name_space, metadata->name);
+	names_kv = g_strdup_printf("names_%s", name_space);
 	// count_names_kv = g_strdup_printf("adios_count_names_kv_%s", name_space);
 
 	/* Create kv object*/
-	kv_object_metadata = j_kv_new("adios_put_metadata", metadata_kv);
+	kv_object_metadata = j_kv_new("adios_metadata", metadata_kv);
 	kv_object_names = j_kv_new("adios_variable_names", names_kv);
 	// kv_object_count_names = j_kv_new("adios_count_variable_names", count_names_kv);
 
@@ -304,8 +304,140 @@ int j_adios_get_all_var_names(char* name_space, char*** names, unsigned int coun
 	return 0;
 }
 
-int j_adios_get_metadata(char* name_space, Metadata** metadata)
+/* The name member of the Metadata struct needs to be set!*/
+int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* semantics)
 {
+	JBatch* batch;
+	gchar* metadata_kv;
+	bson_iter_t* b_iter;
+
+	g_autoptr(JKV) kv_object = NULL;
+	batch = j_batch_new(semantics);
+
+	// metadata = g_slice_alloc(sizeof(Metadata*)); //TODO: is this ok?
+	metadata_kv = g_strdup_printf("%s_%s", name_space, metadata->name);
+	kv_object = j_kv_new("adios_metadata", metadata_kv);
+	bson_t* bson_metadata = bson_new();
+
+	j_kv_get(kv_object, bson_metadata, batch);
+	bson_iter_init(b_iter, bson_metadata);
+
+	/* probably not very efficient;
+	however this function is not supposed to be used when SMD backend is ready */
+	while(bson_iter_next(b_iter))
+	{
+		if(g_strcmp0(bson_iter_key(b_iter),"shape") == 0)
+		{
+			metadata->shape = bson_iter_int64(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"start") == 0)
+		{
+			metadata->start = bson_iter_int64(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"count") == 0)
+		{
+			metadata->count = bson_iter_int64(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"steps_start") == 0)
+		{
+			metadata->steps_start = bson_iter_int64(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"steps_count") == 0)
+		{
+			metadata->steps_count = bson_iter_int64(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"is_value") == 0)
+		{
+			metadata->is_value = (bool) bson_iter_bool(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"data_size") == 0)
+		{
+			metadata->data_size = bson_iter_int64(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"var_type") == 0)
+		{
+			metadata->var_type = (int) bson_iter_int64(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"min_value") == 0)
+		{
+			if(metadata->var_type == CHAR)
+			{
+				metadata->min_value.character = bson_iter_int32(b_iter);
+			}
+			else if(metadata->var_type == INT)
+			{
+				metadata->min_value.integer = bson_iter_int64(b_iter);
+			}
+			else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
+			{
+				bson_iter_decimal128(b_iter,metadata->min_value.ull_integer);
+			}
+			else if(metadata->var_type == FLOAT)
+			{
+				metadata->min_value.real_float = bson_iter_double(b_iter);
+			}
+			else if(metadata->var_type == DOUBLE)
+			{
+				metadata->min_value.real_double = bson_iter_double(b_iter);
+			}
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"max_value") == 0)
+		{
+			if(metadata->var_type == CHAR)
+			{
+				metadata->max_value.character = bson_iter_int32(b_iter);
+			}
+			else if(metadata->var_type == INT)
+			{
+				metadata->max_value.integer = bson_iter_int64(b_iter);
+			}
+			else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
+			{
+				bson_iter_decimal128(b_iter,metadata->max_value.ull_integer);
+			}
+			else if(metadata->var_type == FLOAT)
+			{
+				metadata->max_value.real_float = (float) bson_iter_double(b_iter);
+			}
+			else if(metadata->var_type == DOUBLE)
+			{
+				metadata->max_value.real_double = bson_iter_double(b_iter);
+			}
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"curr_value") == 0)
+		{
+			if(metadata->var_type == CHAR)
+			{
+				metadata->curr_value.character = bson_iter_int32(b_iter);
+			}
+			else if(metadata->var_type == INT)
+			{
+				metadata->curr_value.integer = bson_iter_int64(b_iter);
+			}
+			else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
+			{
+				bson_iter_decimal128(b_iter,metadata->curr_value.ull_integer);
+			}
+			else if(metadata->var_type == FLOAT)
+			{
+				metadata->curr_value.real_float = (float) bson_iter_double(b_iter);
+			}
+			else if(metadata->var_type == DOUBLE)
+			{
+				metadata->curr_value.real_double = bson_iter_double(b_iter);
+			}
+		}
+		else
+		{
+			printf("Unknown key '%s' when retrieving metadata for variable %s\n", bson_iter_key(b_iter), metadata->name);
+		}
+	}
+	printf("Julea Adios Client: Get Metadata \n");
+	return 0;
+}
+
+// int j_adios_get_metadata(char* name_space, Metadata** metadata)
+// {
 	//PSEUDO return kv_get(metadata->name);
 	// bson_t* bson_meta_data;
 	// g_autoptr(JKV) kv_object = NULL;
@@ -337,10 +469,10 @@ int j_adios_get_metadata(char* name_space, Metadata** metadata)
 
 
 	//PSEUDO kv_get(metadata->name,datapointer);
-	printf("Julea Adios Client: Get\n");
+	// printf("Julea Adios Client: Get\n");
 	//smd_backend_get_metadata(); //TODO Straßberger
-	return NULL;
-}
+	// return NULL;
+// }
 
 int j_adios_get_data(char* name_space, char* variable_name, void* datapointer, JBatch* batch, gboolean use_batch)
 {
