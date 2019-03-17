@@ -77,8 +77,8 @@ union value_type{
 	float real_float;
 	double real_double;
 	long double lreal_double;
-	float complex float_complex;	//inconsistent naming I know; sorry real_float_complex is not great either
-	double complex double_complex;
+	// float complex float_complex;	//inconsistent naming I know; sorry real_float_complex is not great either
+	// double complex double_complex;
 };
 typedef union value_type value_type;
 

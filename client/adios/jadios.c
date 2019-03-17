@@ -147,7 +147,7 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	j_batch_execute(batch_2);
 
 	/* check if variable name is already in kv store */
-	if(!b_iter_init_find(b_iter, bson_names, metadata->name))
+	if(!bson_iter_init_find(b_iter, bson_names, metadata->name))
 	{
 		int count_names = 0;
 
