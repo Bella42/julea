@@ -82,7 +82,16 @@ union value_type{
 };
 typedef union value_type value_type;
 
+/**
+ * The metadata struct is designed for the structured metadata backend not for the kv store.
+ * The namespace as well as the name are needed for the structured metadata backend.
+ * The kv store would not require these members, but expect them as parameter so that the
+ * Metadata struct only contains the information actually stored in the backend.
+ *
+ */
+
 struct Metadata{
+	// char* name_space; //IO.open("namespace") = Unique name for Engine within m_IO
 	char* name;
 	const unsigned long* shape;
 	const unsigned long*  start;
@@ -123,8 +132,12 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 /* get data from object store*/
 int j_adios_get_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);
 
-int j_adios_get_all_var_names(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics);
 /* get metadata from kv store; hopefully soon from SMD backend*/
+int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics);
+int j_adios_get_metadata_from_kv(char* name_space, char* var_name, Metadata* metadata, JSemantics* semantics);
+
+/* get metadata from SMD backend*/
+int j_adios_get_all_var_names(char* name_space, char*** names, JSemantics* semantics);
 int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* semantics);
 
 int j_adios_delete(char* name_space, Metadata* metadata, JBatch* batch);

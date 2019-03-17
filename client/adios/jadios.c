@@ -49,122 +49,15 @@
  **/
 
 
-int j_adios_init(JuleaInfo* julea_info)
-{
-	printf("Julea Adios Client: Init\n");
 
-	//DESIGN: additional parameters needed?s
-	// g_autoptr(JBatch) batch = NULL;
-	// g_autoptr(JSemantics) semantics = NULL;
-	// g_autoptr(JObject) object = NULL;
-
-	// g_autofree gchar* name = NULL;
-	// gboolean use_batch = false;
-	julea_info->semantics = j_semantics_new (J_SEMANTICS_TEMPLATE_POSIX);
-
-	return 0;
-}
-
-int j_adios_finish(void)
-{
-	printf("YOU MANAGED TO GET TO J GMM FINISH :) WUHU \n");
-	//PSEUDO create new kv
-	//create new object store
-	//DESIGN: additional parameters needed?s
-
-	return 0;
-}
-
-//DESIGN! Should every put get a new batch? should metadata and data be in the same batch?
 /**
- * Put data and the according metadata. There is no separate function for putting only the metadata.
- * @param  name_space   namespace of the variable; defined by io.open("namespace")
- * @param  metadata     metadata struct containing the information to store in kv
- * @param  data_pointer data to be stored in object store
- * @param  batch 		batch to execute the operation in
- * @param  use_batch    pass false when using deferred/asynchronous I/O; true for synchronous I/O
- * @return              return 0 on success
+ * Put metadata to passed bson file
+ * @param  metadata   		metadata to be stored
+ * @param  bson_meta_data 	bson file of kv store
+ * @return            		returns 0 on success
  */
-int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch)
+int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 {
-	JBatch *batch_2;
-	bson_iter_t *b_iter;
-	bson_t* bson_meta_data;
-	bson_t* bson_names;
-	// bson_t* bson_count_names;
-
-	g_autoptr(JKV) kv_object_metadata = NULL;
-	g_autoptr(JKV) kv_object_names = NULL;
-	g_autoptr(JObject) data_object = NULL;
-	// g_autoptr(JKV) kv_object_count_names = NULL;
-
-	guint64 bytes_written = 0; //nb = bytes written; see benchmark
-
-	gchar *name_metadata_kv;
-	gchar *name_names_kv;
-	gchar *name_data_object;
-	// gchar *count_names_kv;
-
-	batch_2 = j_batch_new(j_batch_get_semantics(batch));
-
-	name_data_object = g_strdup_printf("%s_%s", name_space, metadata->name);
-	data_object = j_object_new("adios_data", name_data_object);
-	j_object_create(data_object, batch);
-	printf("Julea Adios Client: Object create \n");
-
-	float *data = data_pointer;
-	for(int i = 0; i <10; i++)
-	{
-		float test = data[i];
-		printf("Data: [%d]= %f\n",i, test );
-	}
-
-	j_object_write(data_object, data_pointer, metadata->data_size, 0, &bytes_written, batch);
-
-	if(bytes_written, metadata->data_size)
-	{
-		printf("Julea Adios Client: Written data for variable '%s' \n", metadata->name);
-	}
-	else
-	{
-		printf("WARNING: only %d bytes written instead of %d bytes! \n",bytes_written , metadata->data_size);
-	}
-
-	name_metadata_kv = g_strdup_printf("%s_%s", name_space, metadata->name);
-	name_names_kv = g_strdup_printf("names_%s", name_space);
-	// count_names_kv = g_strdup_printf("adios_count_names_kv_%s", name_space);
-
-	kv_object_metadata = j_kv_new("adios_metadata", name_metadata_kv);
-	kv_object_names = j_kv_new("adios_variable_names", name_names_kv);
-	// kv_object_count_names = j_kv_new("adios_count_variable_names", count_names_kv);
-
-
-	bson_meta_data = bson_new();
-	bson_names = bson_new();
-	// bson_count_names = bson_new();
-
-	j_kv_get(kv_object_names, bson_names, batch_2);
-	j_batch_execute(batch_2);
-
-	/* check if variable name is already in kv store */
-	if(!bson_iter_init_find(b_iter, bson_names, metadata->name))
-	{
-		int count_names = 0;
-
-		bson_append_null(bson_names, metadata->name,-1);
-		// j_kv_get(kv_object_count_names, bson_count_names, batch2);
-		// j_batch_execute(batch2);
-		// if(b_iter_init_find(b_iter, bson_count_names, "count"))
-		// {
-		// 	count_names = bson_iter_int32(b_iter);
-		// }
-		// count_names++;
-	}
-	else
-	{
-		printf("Julea Adios Client: Variable %s already in kv store. \n", metadata->name);
-	}
-
 	/* short BSON HOW TO ---------
 	* http://mongoc.org/libbson/current/bson_t.html
 	* bson_append_utf8 (b, key, (int) strlen (key), (val))
@@ -266,6 +159,127 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 
 	}
 
+	return 0;
+}
+
+int j_adios_init(JuleaInfo* julea_info)
+{
+	printf("Julea Adios Client: Init\n");
+
+	//DESIGN: additional parameters needed?s
+	// g_autoptr(JBatch) batch = NULL;
+	// g_autoptr(JSemantics) semantics = NULL;
+	// g_autoptr(JObject) object = NULL;
+
+	// g_autofree gchar* name = NULL;
+	// gboolean use_batch = false;
+	// julea_info->semantics = j_semantics_new (J_SEMANTICS_TEMPLATE_POSIX);
+
+	return 0;
+}
+
+int j_adios_finish(void)
+{
+	printf("YOU MANAGED TO GET TO J GMM FINISH :) WUHU \n");
+	//PSEUDO create new kv
+	//create new object store
+	//DESIGN: additional parameters needed?s
+
+	return 0;
+}
+
+//DESIGN! Should every put get a new batch? should metadata and data be in the same batch?
+/**
+ * Put data and the according metadata. There is no separate function for putting only the metadata.
+ * @param  name_space   namespace of the variables = unique name of engine in m_IO
+ * @param  metadata     metadata struct containing the information to store in kv
+ * @param  data_pointer data to be stored in object store
+ * @param  batch 		batch to execute the operation in
+ * @param  use_batch    pass false when using deferred/asynchronous I/O; true for synchronous I/O
+ * @return              return 0 on success
+ */
+int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch)
+{
+	JBatch *batch_2;
+	bson_iter_t *b_iter;
+	bson_t* bson_meta_data;
+	bson_t* bson_names;
+	// bson_t* bson_count_names;
+
+	g_autoptr(JKV) kv_object_metadata = NULL;
+	g_autoptr(JKV) kv_object_names = NULL;
+	g_autoptr(JObject) data_object = NULL;
+	// g_autoptr(JKV) kv_object_count_names = NULL;
+
+	guint64 bytes_written = 0; //nb = bytes written; see benchmark
+
+	gchar *name_metadata_kv;
+	gchar *name_names_kv;
+	gchar *name_data_object;
+	// gchar *count_names_kv;
+
+	batch_2 = j_batch_new(j_batch_get_semantics(batch));
+
+	name_data_object = g_strdup_printf("%s_%s", name_space, metadata->name);
+	data_object = j_object_new("adios_data", name_data_object);
+	j_object_create(data_object, batch);
+	printf("Julea Adios Client: Object create \n");
+
+	float *data = data_pointer;
+	for(int i = 0; i <10; i++)
+	{
+		float test = data[i];
+		printf("Data: [%d]= %f\n",i, test );
+	}
+
+	j_object_write(data_object, data_pointer, metadata->data_size, 0, &bytes_written, batch);
+
+	if(bytes_written, metadata->data_size)
+	{
+		printf("Julea Adios Client: Data written for variable '%s' \n", metadata->name);
+	}
+	else
+	{
+		printf("WARNING: only %d bytes written instead of %d bytes! \n",bytes_written , metadata->data_size);
+	}
+	name_metadata_kv = g_strdup_printf("%s_%s", name_space, metadata->name);
+	name_names_kv = g_strdup_printf("names_%s", name_space);
+	// count_names_kv = g_strdup_printf("adios_count_names_kv_%s", name_space);
+
+	kv_object_metadata = j_kv_new("adios_metadata", name_metadata_kv);
+	kv_object_names = j_kv_new("adios_variable_names", name_names_kv);
+	// kv_object_count_names = j_kv_new("adios_count_variable_names", count_names_kv);
+
+
+	bson_meta_data = bson_new();
+	bson_names = bson_new();
+	// bson_count_names = bson_new();
+
+	j_kv_get(kv_object_names, bson_names, batch_2);
+	j_batch_execute(batch_2);
+
+	/* check if variable name is already in kv store */
+	if(!bson_iter_init_find(b_iter, bson_names, metadata->name))
+	{
+		int count_names = 0;
+
+		bson_append_null(bson_names, metadata->name,-1);
+		// j_kv_get(kv_object_count_names, bson_count_names, batch2);
+		// j_batch_execute(batch2);
+		// if(b_iter_init_find(b_iter, bson_count_names, "count"))
+		// {
+		// 	count_names = bson_iter_int32(b_iter);
+		// }
+		// count_names++;
+	}
+	else
+	{
+		printf("Julea Adios Client: Variable %s already in kv store. \n", metadata->name);
+	}
+
+	put_metadata_to_bson(metadata, bson_meta_data);
+
+
 	j_kv_put(kv_object_metadata, bson_meta_data, batch);
 	j_kv_put(kv_object_names, bson_names, batch);
 	// j_kv_put(kv_object_count_names, bson_count_names, batch);
@@ -294,7 +308,7 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
  * @param  semantics   semantics to be used
  * @return             returns 0 on success
  */
-int j_adios_get_all_var_names(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics)
+int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics)
 {
 	g_autoptr(JKV) kv_object = NULL;
 	JBatch* batch = j_batch_new(semantics);
@@ -323,16 +337,16 @@ int j_adios_get_all_var_names(char* name_space, char*** names, unsigned int coun
 }
 
 /**
- * Get the metadata from the kv store the passed variable.
- * The name member of the Metadata struct needs to be set since it is the key!
+ * Get the metadata from the kv store for the passed variable.
  * DESIGN: use julea_info struct which contains semantics?
  *
- * @param  name_space namespace of the variable
+ * @param  name_space namespace of the variable = unique engine name in m_IO
+ * @param  var_name namespace of the variable = unique engine name in m_IO
  * @param  metadata   metadata information struct; needs to be allocated
  * @param  semantics  semantics to be used
  * @return            returns 0 on success
  */
-int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* semantics)
+int j_adios_get_metadata_from_kv(char* name_space, char *var_name, Metadata* metadata, JSemantics* semantics)
 {
 	JBatch* batch;
 	gchar* metadata_kv;
@@ -341,16 +355,14 @@ int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* seman
 	g_autoptr(JKV) kv_object = NULL;
 	batch = j_batch_new(semantics);
 
-	// metadata = g_slice_alloc(sizeof(Metadata*)); //TODO: is this ok?
-	metadata_kv = g_strdup_printf("%s_%s", name_space, metadata->name);
+	metadata_kv = g_strdup_printf("%s_%s", name_space, var_name);
 	kv_object = j_kv_new("adios_metadata", metadata_kv);
 	bson_t* bson_metadata = bson_new();
 
 	j_kv_get(kv_object, bson_metadata, batch);
 	bson_iter_init(b_iter, bson_metadata);
 
-	/* probably not very efficient;
-	however this function is not supposed to be used when SMD backend is ready */
+	/* probably not very efficient */
 	while(bson_iter_next(b_iter))
 	{
 		if(g_strcmp0(bson_iter_key(b_iter),"shape") == 0)
@@ -462,6 +474,36 @@ int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* seman
 	printf("Julea Adios Client: Get Metadata \n");
 	return 0;
 }
+
+/**
+ * Get all variables for the passed namespace.
+ * @param  name_space namespace for the variables = the unique engine name in m_IO
+ * @param  names      Array of variable names
+ * @param  semantics  semantics to be used
+ * @return            returns 0 on success
+ */
+int j_adios_get_all_var_names(char* name_space, char*** names, JSemantics* semantics)
+{
+	//TODO: j_smd_get_all_var_names(name_space,names);
+	printf("Julea Adios Client: get_all_var_names (from smd) is not yet supported \n");
+	return 0;
+}
+
+
+/**
+ * Get metadata for the given name_space.
+ * @param  name_space namespace for the variables = the unique engine name in m_IO
+ * @param  metadata   metadata information struct; needs to be allocated
+ * @param  semantics  semantics to be used
+ * @return            returns 0 on success
+ */
+int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* semantics)
+{
+	//TODO: j_smd_get_metadata(name_space, metadata);
+	printf("Julea Adios Client: get_metadata (from smd) is not yet supported \n");
+	return 0;
+}
+
 
 /**
  * Get the data for the passed variable from object store
