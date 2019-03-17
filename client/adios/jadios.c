@@ -204,19 +204,16 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	bson_iter_t *b_iter;
 	bson_t* bson_meta_data;
 	bson_t* bson_names;
-	// bson_t* bson_count_names;
 
 	g_autoptr(JKV) kv_object_metadata = NULL;
 	g_autoptr(JKV) kv_object_names = NULL;
 	g_autoptr(JObject) data_object = NULL;
-	// g_autoptr(JKV) kv_object_count_names = NULL;
 
 	guint64 bytes_written = 0; //nb = bytes written; see benchmark
 
 	gchar *name_metadata_kv;
 	gchar *name_names_kv;
 	gchar *name_data_object;
-	// gchar *count_names_kv;
 
 	batch_2 = j_batch_new(j_batch_get_semantics(batch));
 
@@ -244,16 +241,13 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	}
 	name_metadata_kv = g_strdup_printf("%s_%s", name_space, metadata->name);
 	name_names_kv = g_strdup_printf("names_%s", name_space);
-	// count_names_kv = g_strdup_printf("adios_count_names_kv_%s", name_space);
 
 	kv_object_metadata = j_kv_new("adios_metadata", name_metadata_kv);
 	kv_object_names = j_kv_new("adios_variable_names", name_names_kv);
-	// kv_object_count_names = j_kv_new("adios_count_variable_names", count_names_kv);
 
 
 	bson_meta_data = bson_new();
 	bson_names = bson_new();
-	// bson_count_names = bson_new();
 
 	j_kv_get(kv_object_names, bson_names, batch_2);
 	j_batch_execute(batch_2);
@@ -264,13 +258,6 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 		int count_names = 0;
 
 		bson_append_null(bson_names, metadata->name,-1);
-		// j_kv_get(kv_object_count_names, bson_count_names, batch2);
-		// j_batch_execute(batch2);
-		// if(b_iter_init_find(b_iter, bson_count_names, "count"))
-		// {
-		// 	count_names = bson_iter_int32(b_iter);
-		// }
-		// count_names++;
 	}
 	else
 	{
@@ -278,11 +265,11 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	}
 
 	put_metadata_to_bson(metadata, bson_meta_data);
-
-
 	j_kv_put(kv_object_metadata, bson_meta_data, batch);
 	j_kv_put(kv_object_names, bson_names, batch);
-	// j_kv_put(kv_object_count_names, bson_count_names, batch);
+
+	//j_smd_put_metadata(name_space, metadata, batch); //TODO use SMD backend
+
 
 	if(use_batch)
 	{
@@ -291,7 +278,6 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	}
 
 	printf("Julea Adios Client: Put\n");
-	//smd_backend_store_metadata(); //TODO Straßberger
 	return 0;
 }
 
