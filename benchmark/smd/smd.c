@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2017-2018 Michael Straßberger
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,31 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * \file
- **/
-
-#ifndef JULEA_CONNECTION_POOL_H
-#define JULEA_CONNECTION_POOL_H
-
-#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
-#error "Only <julea.h> can be included directly."
-#endif
+#include <julea-config.h>
 
 #include <glib.h>
-#include <gio/gio.h>
 
-G_BEGIN_DECLS
+#include <string.h>
 
-GSocketConnection* j_connection_pool_pop_object (guint);
-void j_connection_pool_push_object (guint, GSocketConnection*);
+#include <julea.h>
+#include <julea-smd.h>
 
-GSocketConnection* j_connection_pool_pop_kv (guint);
-void j_connection_pool_push_kv (guint, GSocketConnection*);
+#include "benchmark.h"
 
-GSocketConnection* j_connection_pool_pop_smd (guint);
-void j_connection_pool_push_smd (guint, GSocketConnection*);
-
-G_END_DECLS
-
-#endif
+void
+benchmark_smd(void)
+{
+  return;
+}

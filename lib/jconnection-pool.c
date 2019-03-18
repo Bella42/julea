@@ -60,8 +60,10 @@ struct JConnectionPool
 	JConfiguration* configuration;
 	JConnectionPoolQueue* object_queues;
 	JConnectionPoolQueue* kv_queues;
+	JConnectionPoolQueue* smd_queues;
 	guint object_len;
 	guint kv_len;
+	guint smd_len;
 	guint max_count;
 };
 
@@ -84,6 +86,8 @@ j_connection_pool_init (JConfiguration* configuration)
 	pool->object_queues = g_new(JConnectionPoolQueue, pool->object_len);
 	pool->kv_len = j_configuration_get_kv_server_count(configuration);
 	pool->kv_queues = g_new(JConnectionPoolQueue, pool->kv_len);
+	pool->smd_len = j_configuration_get_smd_server_count(configuration);
+	pool->smd_queues = g_new(JConnectionPoolQueue, pool->smd_len);
 	pool->max_count = j_configuration_get_max_connections(configuration);
 
 	if (pool->max_count == 0)
@@ -101,6 +105,12 @@ j_connection_pool_init (JConfiguration* configuration)
 	{
 		pool->kv_queues[i].queue = g_async_queue_new();
 		pool->kv_queues[i].count = 0;
+	}
+
+	for (guint i = 0; i < pool->smd_len; i++)
+	{
+		pool->smd_queues[i].queue = g_async_queue_new();
+		pool->smd_queues[i].count = 0;
 	}
 
 	g_atomic_pointer_set(&j_connection_pool, pool);
@@ -146,10 +156,24 @@ j_connection_pool_fini (void)
 		g_async_queue_unref(pool->kv_queues[i].queue);
 	}
 
+	for (guint i = 0; i < pool->smd_len; i++)
+	{
+		GSocketConnection* connection;
+
+		while ((connection = g_async_queue_try_pop(pool->smd_queues[i].queue)) != NULL)
+		{
+			g_io_stream_close(G_IO_STREAM(connection), NULL, NULL);
+			g_object_unref(connection);
+		}
+
+		g_async_queue_unref(pool->kv_queues[i].queue);
+	}
+
 	j_configuration_unref(pool->configuration);
 
 	g_free(pool->object_queues);
 	g_free(pool->kv_queues);
+	g_free(pool->smd_queues);
 
 	g_slice_free(JConnectionPool, pool);
 
@@ -223,6 +247,10 @@ j_connection_pool_pop_internal (GAsyncQueue* queue, guint* count, gchar const* s
 				else if (g_strcmp0(backend, "kv") == 0)
 				{
 					//g_print("Server has kv backend.\n");
+				}
+				else if (g_strcmp0(backend, "smd") == 0)
+				{
+					//g_print("Server has smd backend.\n");
 				}
 			}
 		}
@@ -317,6 +345,37 @@ j_connection_pool_push_kv (guint index, GSocketConnection* connection)
 	j_trace_enter(G_STRFUNC, NULL);
 
 	j_connection_pool_push_internal(j_connection_pool->kv_queues[index].queue, connection);
+
+	j_trace_leave(G_STRFUNC);
+}
+
+GSocketConnection*
+j_connection_pool_pop_smd (guint index)
+{
+	GSocketConnection* connection;
+
+	g_return_val_if_fail(j_connection_pool != NULL, NULL);
+	g_return_val_if_fail(index < j_connection_pool->smd_len, NULL);
+
+	j_trace_enter(G_STRFUNC, NULL);
+
+	connection = j_connection_pool_pop_internal(j_connection_pool->smd_queues[index].queue, &(j_connection_pool->smd_queues[index].count), j_configuration_get_smd_server(j_connection_pool->configuration, index));
+
+	j_trace_leave(G_STRFUNC);
+
+	return connection;
+}
+
+void
+j_connection_pool_push_smd (guint index, GSocketConnection* connection)
+{
+	g_return_if_fail(j_connection_pool != NULL);
+	g_return_if_fail(index < j_connection_pool->smd_len);
+	g_return_if_fail(connection != NULL);
+
+	j_trace_enter(G_STRFUNC, NULL);
+
+	j_connection_pool_push_internal(j_connection_pool->smd_queues[index].queue, connection);
 
 	j_trace_leave(G_STRFUNC);
 }

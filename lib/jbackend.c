@@ -57,6 +57,9 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 		case J_BACKEND_TYPE_KV:
 			type_str = "kv";
 			break;
+		case J_BACKEND_TYPE_SMD:
+			type_str = "smd";
+			break;
 		default:
 			g_warn_if_reached();
 	}
@@ -138,6 +141,22 @@ j_backend_load (gchar const* name, JBackendComponent component, JBackendType typ
 		}
 	}
 
+	if (type == J_BACKEND_TYPE_SMD)
+	{
+		if (tmp_backend->smd.backend_init == NULL
+		    || tmp_backend->smd.backend_fini == NULL
+				|| tmp_backend->smd.backend_apply_scheme == NULL
+				|| tmp_backend->smd.backend_get_scheme == NULL
+				|| tmp_backend->smd.backend_insert == NULL
+				|| tmp_backend->smd.backend_update == NULL
+				|| tmp_backend->smd.backend_delete == NULL
+				|| tmp_backend->smd.backend_search == NULL
+				|| tmp_backend->smd.backend_iterate == NULL
+				|| tmp_backend->smd.backend_error == NULL)
+		{
+			goto error;
+		}
+	}
 	*backend = tmp_backend;
 
 	return module;
@@ -522,6 +541,173 @@ j_backend_kv_iterate (JBackend* backend, gpointer iterator, bson_t* value)
 	j_trace_enter("backend_iterate", "%p, %p", iterator, (gpointer)value);
 	ret = backend->kv.backend_iterate(iterator, value);
 	j_trace_leave("backend_iterate");
+
+	return ret;
+}
+
+gboolean
+j_backend_smd_init (JBackend* backend, gchar const* path)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_SMD, FALSE);
+	g_return_val_if_fail(path != NULL, FALSE);
+
+	j_trace_enter("smd_init", "%s", path);
+	ret = backend->kv.backend_init(path);
+	j_trace_leave("smd_init");
+
+	return ret;
+}
+
+void
+j_backend_smd_fini(JBackend* backend)
+{
+	g_return_if_fail(backend != NULL);
+	g_return_if_fail(backend->type == J_BACKEND_TYPE_SMD);
+
+	j_trace_enter("smd_fini", NULL);
+	backend->smd.backend_fini();
+	j_trace_leave("smd_fini");
+}
+
+gboolean
+j_backend_smd_apply_scheme(JBackend* backend, const gchar* namespace, const bson_t* scheme)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_SMD, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(scheme != NULL, FALSE);
+
+	j_trace_enter("smd_apply_scheme","%s", namespace);
+	ret = backend->smd.backend_apply_scheme(namespace,scheme);
+	j_trace_leave("smd_apply_scheme");
+
+	return ret;
+}
+
+gboolean
+j_backend_smd_get_scheme(JBackend* backend, const gchar* namespace, bson_t* scheme)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_SMD, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(scheme != NULL, FALSE);
+
+	j_trace_enter("smd_get_scheme","%s", namespace);
+	ret = backend->smd.backend_get_scheme(namespace,scheme);
+	j_trace_leave("smd_get_scheme");
+
+	return ret;
+}
+
+gboolean
+j_backend_smd_insert (JBackend* backend, gchar const* namespace,gchar const* key, bson_t const* node)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_SMD, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
+	g_return_val_if_fail(node != NULL, FALSE);
+
+	j_trace_enter("smd_insert","%s", namespace);
+	ret = backend->smd.backend_insert(namespace,key,node);
+	j_trace_leave("smd_insert");
+
+	return ret;
+}
+
+gboolean
+j_backend_smd_update (JBackend* backend, gchar const* namespace,gchar const* key, bson_t const* node)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_SMD, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
+	g_return_val_if_fail(node != NULL, FALSE);
+
+	j_trace_enter("smd_update","%s", namespace);
+	ret = backend->smd.backend_insert(namespace,key,node);
+	j_trace_leave("smd_update");
+
+	return ret;
+}
+
+gboolean
+j_backend_smd_delete (JBackend* backend, gchar const* namespace,gchar const* key, bson_t const* node)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_SMD, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
+	g_return_val_if_fail(node != NULL, FALSE);
+
+	j_trace_enter("smd_delete","%s", namespace);
+	ret = backend->smd.backend_insert(namespace,key,node);
+	j_trace_leave("smd_delete");
+
+	return ret;
+}
+
+gboolean
+j_backend_smd_get (JBackend* backend, gchar const* namespace,gchar const* key, bson_t const* node)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_SMD, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
+	g_return_val_if_fail(node != NULL, FALSE);
+
+	j_trace_enter("smd_get","%s", namespace);
+	ret = backend->smd.backend_insert(namespace,key,node);
+	j_trace_leave("smd_get");
+
+	return ret;
+}
+
+
+gboolean
+j_backend_smd_search (JBackend* backend, bson_t* search_args, gpointer* data)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_SMD, FALSE);
+	g_return_val_if_fail(search_args != NULL, FALSE);
+
+	j_trace_enter("smd_search",NULL);
+	ret = backend->smd.backend_search(search_args,data);
+	j_trace_leave("smd_search");
+
+	return ret;
+}
+
+gboolean
+j_backend_smd_search_namespace (JBackend* backend, bson_t* search_args, gpointer* data, gchar const* namespace)
+{
+	gboolean ret;
+
+	g_return_val_if_fail(backend != NULL, FALSE);
+	g_return_val_if_fail(backend->type == J_BACKEND_TYPE_SMD, FALSE);
+	g_return_val_if_fail(search_args != NULL, FALSE);
+	g_return_val_if_fail(namespace != NULL, FALSE);
+
+	j_trace_enter("smd_search_namespace","%s", namespace);
+	ret = backend->smd.backend_search_namespace(search_args,data,namespace);
+	j_trace_leave("smd_search_namespace");
 
 	return ret;
 }

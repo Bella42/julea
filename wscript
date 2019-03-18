@@ -400,7 +400,7 @@ def build (ctx):
 		install_path = '${LIBDIR}'
 	)
 
-	clients = ['object', 'kv', 'item', 'adios']
+	clients = ['object', 'kv', 'item', 'adios', 'smd']
 
 	for client in clients:
 		use_extra = []
@@ -510,6 +510,38 @@ def build (ctx):
 			cflags = cflags,
 			rpath = get_rpath(ctx),
 			install_path = '${LIBDIR}/julea/backend/kv'
+		)
+
+	smd_backends = ['null']
+
+	if ctx.env.JULEA_SQLITE:
+		smd_backends.append('sqlite')
+
+	for backend in smd_backends:
+		use_extra = []
+		cflags = []
+
+		if backend == 'leveldb':
+			use_extra = ['LEVELDB']
+			# FIXME leveldb bug, https://github.com/google/leveldb/pull/365
+			cflags = ['-Wno-strict-prototypes']
+		elif backend == 'lmdb':
+			use_extra = ['LMDB']
+			# FIXME lmdb bug
+			cflags = ['-Wno-discarded-qualifiers']
+		elif backend == 'mongodb':
+			use_extra = ['LIBMONGOC']
+		elif backend == 'sqlite':
+			use_extra = ['SQLITE']
+
+		ctx.shlib(
+			source = ['backend/smd/{0}.c'.format(backend)],
+			target = 'backend/smd/{0}'.format(backend),
+			use = use_julea_backend + ['lib/julea-smd'] + ['lib/julea'] + use_extra,
+			includes = ['include'],
+			cflags = cflags,
+			rpath = get_rpath(ctx),
+			install_path = '${LIBDIR}/julea/backend/smd'
 		)
 
 	# Command line
