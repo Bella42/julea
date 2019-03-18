@@ -58,7 +58,7 @@ enum variable_type{
 };
 typedef enum variable_type variable_type;
 
-//to pass, e.g. "float min_value" an actual c type is needed
+//to pass, e.g. "float min_value" an actual c type is needed; therefore this union...
 union value_type{
 	//compound?!
 	//unknown?!
@@ -114,6 +114,7 @@ typedef struct Metadata Metadata;
 
 struct JuleaInfo{
 	JSemantics* semantics;
+	char* name_space; //unique engine name within m_IO
 	//DESIGN: should every io op get a new batch?
 	//where should this be decided in adios? probably...
 

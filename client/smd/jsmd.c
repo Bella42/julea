@@ -41,6 +41,33 @@
  * @{
  **/
 
+/**
+ * A JSMD.
+ **/
+struct JSMD
+{
+  /**
+   * The data server index.
+   */
+  guint32 index;
+
+  /**
+   * The namespace.
+   **/
+  gchar* namespace;     //unique engine name in m_IO
+
+  /**
+   * The key.
+   **/
+  gchar* key;           //any member of scheme?
+
+  /**
+   * The reference count.
+   **/
+  gint ref_count;
+};
+
+
 int64_t
 j_smd_type_string2int(const gchar* string)
 {
@@ -56,7 +83,7 @@ j_smd_type_string2int(const gchar* string)
   return ret;
 }
 
-gchar* 
+gchar*
 j_smd_type_int2string(int64_t type_value)
 {
   if(type_value > (int64_t) (sizeof(JSMD_TYPES_STRING) / sizeof(JSMD_TYPES_STRING[0])))
@@ -65,7 +92,7 @@ j_smd_type_int2string(int64_t type_value)
     return g_strdup(JSMD_TYPES_STRING[type_value]);
 }
 
-void 
+void
 j_smd_apply_scheme(const gchar* namespace, const bson_t* scheme, JBatch* batch)
 {
   g_return_if_fail(namespace != NULL);
@@ -73,7 +100,7 @@ j_smd_apply_scheme(const gchar* namespace, const bson_t* scheme, JBatch* batch)
   g_return_if_fail(batch != NULL);
 }
 
-void 
+void
 j_smd_get_scheme(const gchar* namespace, const bson_t* scheme, JBatch* batch)
 {
   g_return_if_fail(namespace != NULL);
@@ -81,7 +108,7 @@ j_smd_get_scheme(const gchar* namespace, const bson_t* scheme, JBatch* batch)
   g_return_if_fail(batch != NULL);
 }
 
-void 
+void
 j_smd_insert(const gchar* namespace, const gchar* key, const bson_t* node, JBatch* batch)
 {
   g_return_if_fail(namespace != NULL);
@@ -90,7 +117,7 @@ j_smd_insert(const gchar* namespace, const gchar* key, const bson_t* node, JBatc
   g_return_if_fail(batch != NULL);
 }
 
-void 
+void
 j_smd_get(const gchar* namespace, const gchar* key, const bson_t* node, JBatch* batch)
 {
   g_return_if_fail(namespace != NULL);
@@ -99,16 +126,16 @@ j_smd_get(const gchar* namespace, const gchar* key, const bson_t* node, JBatch* 
   g_return_if_fail(batch != NULL);
 }
 
-void 
+void
 j_smd_update(const gchar* namespace, const gchar* key, const bson_t* node, JBatch* batch)
-{ 
+{
   g_return_if_fail(namespace != NULL);
   g_return_if_fail(key != NULL);
   g_return_if_fail(node != NULL);
   g_return_if_fail(batch != NULL);
 }
 
-void 
+void
 j_smd_delete(const gchar* namespace, const gchar* key, const bson_t* node, JBatch* batch)
 {
   g_return_if_fail(namespace != NULL);

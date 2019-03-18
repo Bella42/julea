@@ -19,14 +19,12 @@
 /**
  * \file
  **/
-
 #include <julea-config.h>
 
-#include <glib.h>
-
-#include <string.h>
-
+#include <assert.h>
 #include <bson.h>
+#include <glib.h>
+#include <string.h>
 
 // #include <item/jitem.h>
 // #include <item/jitem-internal.h>
@@ -39,6 +37,7 @@
 #include <julea-internal.h>
 #include <julea-kv.h>
 #include <julea-object.h>
+#include <julea-smd.h>
 
 /**
  * \defgroup JAdios Item
@@ -48,9 +47,11 @@
  * @{
  **/
 int print_float_data(void* data_pointer);
-int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data);
+void metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data);
+void create_scheme_for_metadata_struct(bson_t* scheme);
 
-int print_float_data(void* data_pointer)
+int
+print_float_data(void* data_pointer)
 {
 	float *data = data_pointer;
 	for(int i = 0; i <10; i++)
@@ -61,29 +62,65 @@ int print_float_data(void* data_pointer)
 	return 0;
 }
 
+/**
+ * Create scheme for smd backend in a bson file.
+ * The scheme is according to the current version of the metadata struct (18.03.2019).
+ *
+ * @param [w] scheme 	 bson file to store the scheme in
+ * @return       		 returns 0 on success
+ */
+void
+create_scheme_for_metadata_struct(bson_t* scheme)
+{
+	//TODO: check return value
+	// int err = -1;
+
+	assert(bson_append_int32(scheme, "name_space", -1, JSMD_TYPE_UNSIGNED_LONG_INT));
+	assert(bson_append_int32(scheme, "name", -1, JSMD_TYPE_UNSIGNED_LONG_INT));
+
+	assert(bson_append_int32(scheme, "shape", -1, JSMD_TYPE_UNSIGNED_LONG_INT));
+	assert(bson_append_int32(scheme, "start", -1, JSMD_TYPE_UNSIGNED_LONG_INT));
+	assert(bson_append_int32(scheme, "count", -1, JSMD_TYPE_UNSIGNED_LONG_INT));
+
+	assert(bson_append_int32(scheme, "steps_start", -1, JSMD_TYPE_UNSIGNED_INT));
+	assert(bson_append_int32(scheme, "steps_count", -1, JSMD_TYPE_UNSIGNED_INT));
+
+	assert(bson_append_int32(scheme, "constant_shape", -1, JSMD_TYPE_BOOLEAN));
+	assert(bson_append_int32(scheme, "is_value", -1, JSMD_TYPE_BOOLEAN));
+
+	assert(bson_append_int32(scheme, "data_size", -1, JSMD_TYPE_UNSIGNED_INT));
+	assert(bson_append_int32(scheme, "variable_type", -1, JSMD_TYPE_INT)); //DESIGN: which solution?
+	assert(bson_append_int32(scheme, "variable_type", -1, JSMD_TYPE_VARIABLE_TYPE));
+
+	assert(bson_append_int32(scheme, "min_value", -1, JSMD_TYPE_VALUE_TYPE));
+	assert(bson_append_int32(scheme, "max_value", -1, JSMD_TYPE_VALUE_TYPE));
+	assert(bson_append_int32(scheme, "curr_value", -1, JSMD_TYPE_VALUE_TYPE));
+}
+
 
 /**
  * Put metadata to passed bson file
  *
  * @param [r] metadata   		metadata to be stored
  * @param [r] bson_meta_data 	bson file of kv store
- * @return 						returns 0 on success
  */
-int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
+void
+metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 {
 	/* short BSON HOW TO ---------
 	* http://mongoc.org/libbson/current/bson_t.html
 	* bson_append_utf8 (b, key, (int) strlen (key), (val))
 	* key_length: The length of key in bytes, or -1 to determine the length with strlen(). */
 	//TODO: check return value!
-	bson_append_int64(bson_meta_data, "shape", -1, (unsigned long) metadata->shape);
-	bson_append_int64(bson_meta_data, "start", -1, (unsigned long) metadata->start);
-	bson_append_int64(bson_meta_data, "count", -1, (unsigned long) metadata->count);
-	bson_append_int64(bson_meta_data, "steps_start", -1, metadata->steps_start);
-	bson_append_int64(bson_meta_data, "steps_count", -1, metadata->steps_count);
-	bson_append_bool(bson_meta_data, "is_value", -1, metadata->is_value);
-	bson_append_int64(bson_meta_data, "data_size", -1, metadata->data_size);
-	bson_append_int64(bson_meta_data, "var_type", -1, metadata->var_type);
+	assert(bson_append_int64(bson_meta_data, "shape", -1, (unsigned long) metadata->shape));
+	assert(bson_append_int64(bson_meta_data, "start", -1, (unsigned long) metadata->start));
+	assert(bson_append_int64(bson_meta_data, "count", -1, (unsigned long) metadata->count));
+	assert(bson_append_int64(bson_meta_data, "steps_start", -1, metadata->steps_start));
+	assert(bson_append_int64(bson_meta_data, "steps_count", -1, metadata->steps_count));
+	assert(bson_append_bool(bson_meta_data, "constant_shape", -1, metadata->constant_shape));
+	assert(bson_append_bool(bson_meta_data, "is_value", -1, metadata->is_value));
+	assert(bson_append_int64(bson_meta_data, "data_size", -1, metadata->data_size));
+	assert(bson_append_int64(bson_meta_data, "var_type", -1, metadata->var_type));
 
 	/* now comes the part for "min_value" of type T in C++ */
 	if(metadata->var_type == COMPOUND)
@@ -100,9 +137,9 @@ int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	}
 	else if(metadata->var_type == CHAR)
 	{
-		bson_append_int32(bson_meta_data, "min_value", -1, metadata->min_value.integer);
-		bson_append_int32(bson_meta_data, "max_value", -1, metadata->max_value.integer);
-		bson_append_int32(bson_meta_data, "curr_value", -1, metadata->curr_value.integer);
+		assert(bson_append_int32(bson_meta_data, "min_value", -1, metadata->min_value.integer));
+		assert(bson_append_int32(bson_meta_data, "max_value", -1, metadata->max_value.integer));
+		assert(bson_append_int32(bson_meta_data, "curr_value", -1, metadata->curr_value.integer));
 	}
 	else if(metadata->var_type == SIGNED_CHAR)
 	{
@@ -122,9 +159,9 @@ int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	}
 	else if(metadata->var_type == INT)
 	{
-		bson_append_int64(bson_meta_data, "min_value", -1, metadata->min_value.integer);
-		bson_append_int64(bson_meta_data, "max_value", -1, metadata->max_value.integer);
-		bson_append_int64(bson_meta_data, "curr_value", -1, metadata->curr_value.integer);
+		assert(bson_append_int64(bson_meta_data, "min_value", -1, metadata->min_value.integer));
+		assert(bson_append_int64(bson_meta_data, "max_value", -1, metadata->max_value.integer));
+		assert(bson_append_int64(bson_meta_data, "curr_value", -1, metadata->curr_value.integer));
 	}
 	else if(metadata->var_type == UNSIGNED_INT)
 	{
@@ -143,24 +180,24 @@ int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	}
 	else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
 	{
-		bson_append_decimal128(bson_meta_data, "min_value", -1,
-			(void*) metadata->min_value.ull_integer);
-		bson_append_decimal128(bson_meta_data, "max_value", -1,
-			(void*) metadata->max_value.ull_integer);
-		bson_append_decimal128(bson_meta_data, "curr_value", -1,
-			(void*) metadata->curr_value.ull_integer);
+		assert(bson_append_decimal128(bson_meta_data, "min_value", -1,
+			(void*) metadata->min_value.ull_integer));
+		assert(bson_append_decimal128(bson_meta_data, "max_value", -1,
+			(void*) metadata->max_value.ull_integer));
+		assert(bson_append_decimal128(bson_meta_data, "curr_value", -1,
+			(void*) metadata->curr_value.ull_integer));
 	}
 	else if(metadata->var_type == FLOAT)
 	{
-		bson_append_double(bson_meta_data, "min_value", -1, metadata->min_value.real_float);
-		bson_append_double(bson_meta_data, "max_value", -1, metadata->max_value.real_float);
-		bson_append_double(bson_meta_data, "curr_value", -1, metadata->curr_value.real_float);
+		assert(bson_append_double(bson_meta_data, "min_value", -1, metadata->min_value.real_float));
+		assert(bson_append_double(bson_meta_data, "max_value", -1, metadata->max_value.real_float));
+		assert(bson_append_double(bson_meta_data, "curr_value", -1, metadata->curr_value.real_float));
 	}
 	else if(metadata->var_type == DOUBLE)
 	{
-		bson_append_double(bson_meta_data, "min_value", -1, metadata->min_value.real_double);
-		bson_append_double(bson_meta_data, "max_value", -1, metadata->max_value.real_double);
-		bson_append_double(bson_meta_data, "curr_value", -1, metadata->curr_value.real_double);
+		assert(bson_append_double(bson_meta_data, "min_value", -1, metadata->min_value.real_double));
+		assert(bson_append_double(bson_meta_data, "max_value", -1, metadata->max_value.real_double));
+		assert(bson_append_double(bson_meta_data, "curr_value", -1, metadata->curr_value.real_double));
 	}
 	else if(metadata->var_type == LONG_DOUBLE)
 	{
@@ -174,22 +211,36 @@ int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	{
 
 	}
-
-	return 0;
 }
 
-int j_adios_init(JuleaInfo* julea_info)
+/**
+ * Initialise ADIOS client.
+ * @param [r] julea_info
+ * @return            [description]
+ */
+int
+j_adios_init(JuleaInfo* julea_info)
 {
+	bson_t* scheme;
+	JBatch* batch;
+
+	scheme = bson_new();
+	batch = j_batch_new(julea_info->semantics);
+
+	create_scheme_for_metadata_struct(scheme);
+	j_smd_apply_scheme(julea_info->name_space, scheme, batch);
+	j_batch_execute(batch);
+
 	printf("Julea Adios Client: Init\n");
 
-	//DESIGN: what should happen here?
-	//DESIGN: additional parameters needed?
-	// julea_info->semantics = j_semantics_new (J_SEMANTICS_TEMPLATE_POSIX);
-
 	return 0;
 }
 
-int j_adios_finish(void)
+/**
+ * Finalise ADIOS client
+ */
+int
+j_adios_finish(void)
 {
 	printf("YOU MANAGED TO GET TO J GMM FINISH :) WUHU \n");
 	//PSEUDO create new kv
@@ -210,13 +261,14 @@ int j_adios_finish(void)
  * @param [r] use_batch    	pass false when using deferred/asynchronous I/O; true for synchronous I/O
  * @return              	return 0 on success
  */
-int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch)
+int
+j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch)
 {
 	JBatch *batch_2;
 	guint64 bytes_written = 0; //nb = bytes written; see benchmark
 
 	bson_iter_t *b_iter = NULL;
-	bson_t* bson_meta_data;
+	bson_t* bson_metadata;
 	bson_t* bson_names;
 
 	g_autoptr(JKV) kv_object_metadata = NULL;
@@ -254,7 +306,7 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	kv_object_metadata = j_kv_new("adios_metadata", name_metadata_kv);
 	kv_object_names = j_kv_new("adios_variable_names", name_names_kv);
 
-	bson_meta_data = bson_new();
+	bson_metadata = bson_new();
 	bson_names = bson_new();
 
 	j_kv_get(kv_object_names, bson_names, batch_2);
@@ -263,18 +315,21 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	/* check if variable name is already in kv store */
 	if(!bson_iter_init_find(b_iter, bson_names, metadata->name))
 	{
-		bson_append_null(bson_names, metadata->name,-1);
+		assert(bson_append_null(bson_names, metadata->name,-1));
 	}
 	else
 	{
 		printf("Julea Adios Client: Variable %s already in kv store. \n", metadata->name);
 	}
 
-	put_metadata_to_bson(metadata, bson_meta_data);
-	j_kv_put(kv_object_metadata, bson_meta_data, batch);
+	/* using kv store */
+	metadata_to_bson(metadata, bson_metadata);
+	j_kv_put(kv_object_metadata, bson_metadata, batch);
 	j_kv_put(kv_object_names, bson_names, batch);
 
-	//j_smd_put_metadata(name_space, metadata, batch); //TODO use SMD backend
+	/* using smd backend */
+	metadata_to_bson(metadata, bson_metadata);
+	j_smd_insert(name_space, metadata->name, bson_metadata, batch); //TODO use SMD backend
 
 	if(use_batch)
 	{
@@ -300,7 +355,8 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
  * @param [r] semantics   semantics to be used
  * @return             	  returns 0 on success
  */
-int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics)
+int
+j_adios_get_all_var_names_from_kv(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics)
 {
 	gchar* names_kv;
 	bson_t* bson_names;
@@ -342,7 +398,8 @@ int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, unsigned 
  * @param [r] semantics  	semantics to be used
  * @return            		returns 0 on success
  */
-int j_adios_get_metadata_from_kv(char* name_space, char *var_name, Metadata* metadata, JSemantics* semantics)
+int
+j_adios_get_metadata_from_kv(char* name_space, char *var_name, Metadata* metadata, JSemantics* semantics)
 {
 	JBatch* batch;
 	gchar* metadata_kv;
@@ -381,6 +438,10 @@ int j_adios_get_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		else if(g_strcmp0(bson_iter_key(b_iter),"steps_count") == 0)
 		{
 			metadata->steps_count = bson_iter_int64(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"constant_shape") == 0)
+		{
+			metadata->constant_shape = (bool) bson_iter_bool(b_iter);
 		}
 		else if(g_strcmp0(bson_iter_key(b_iter),"is_value") == 0)
 		{
@@ -482,7 +543,8 @@ int j_adios_get_metadata_from_kv(char* name_space, char *var_name, Metadata* met
  * @param [r] semantics  semantics to be used
  * @return            	 returns 0 on success
  */
-int j_adios_get_all_var_names(char* name_space, char*** names, JSemantics* semantics)
+int
+j_adios_get_all_var_names(char* name_space, char*** names, JSemantics* semantics)
 {
 	JBatch* batch;
 	gchar* smd_name;
@@ -511,7 +573,8 @@ int j_adios_get_all_var_names(char* name_space, char*** names, JSemantics* seman
  * @param [r] semantics  semantics to be used
  * @return            	 returns 0 on success
  */
-int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* semantics)
+int
+j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* semantics)
 {
 	JBatch* batch;
 	gchar* smd_name;
@@ -542,7 +605,8 @@ int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* seman
  * @param [r] use_batch     pass false when using deferred/asynchronous I/O; true for synchronous I/O
  * @return               	returns 0 on success
  */
-int j_adios_get_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch)
+int
+j_adios_get_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch)
 {
 	guint64 bytes_read = 0; //nb = bytes written; see benchmark
 	g_autoptr(JObject) data_object = NULL;
@@ -576,7 +640,8 @@ int j_adios_get_data(char* name_space, char* variable_name, unsigned int length,
  * @param [r] batch      [description]
  * @return            [description]
  */
-int j_adios_delete_variable(char* name_space, char* var_name, JBatch* batch)
+int
+j_adios_delete_variable(char* name_space, char* var_name, JBatch* batch)
 {
 	g_autoptr(JKV) kv_object_metadata = NULL;
 	g_autoptr(JKV) kv_object_names = NULL;

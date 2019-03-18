@@ -49,9 +49,16 @@ const gchar *JSMD_TYPES_STRING[] = {
 #undef JSMD_REGISTER_TYPE
 
 struct JSMD;
-
 typedef struct JSMD JSMD;
 
+/* db handle */
+JSMD* j_smd_new (gchar const*, gchar const*);
+// JSMD* j_smd_new_for_index (guint32, gchar const*, gchar const*);
+JSMD* j_smd_ref (JSMD*);
+void j_smd_unref (JSMD*);
+
+
+/* --- Straßberger API ---*/
 int64_t j_smd_type_string2int(const gchar*);
 gchar*  j_smd_type_int2string(int64_t);
 
