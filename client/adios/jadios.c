@@ -89,14 +89,13 @@ create_scheme_for_metadata_struct(bson_t* scheme)
 	assert(bson_append_int32(scheme, "is_value", -1, JSMD_TYPE_BOOLEAN));
 
 	assert(bson_append_int32(scheme, "data_size", -1, JSMD_TYPE_UNSIGNED_INT));
-	assert(bson_append_int32(scheme, "variable_type", -1, JSMD_TYPE_INT)); //DESIGN: which solution?
+	// assert(bson_append_int32(scheme, "variable_type", -1, JSMD_TYPE_INT)); //DESIGN: which solution?
 	assert(bson_append_int32(scheme, "variable_type", -1, JSMD_TYPE_VARIABLE_TYPE));
 
 	assert(bson_append_int32(scheme, "min_value", -1, JSMD_TYPE_VALUE_TYPE));
 	assert(bson_append_int32(scheme, "max_value", -1, JSMD_TYPE_VALUE_TYPE));
 	assert(bson_append_int32(scheme, "curr_value", -1, JSMD_TYPE_VALUE_TYPE));
 }
-
 
 /**
  * Put metadata to passed bson file
@@ -344,7 +343,6 @@ j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* ba
 	printf("Julea Adios Client: Put\n");
 	return 0;
 }
-
 
 /**
  * Get all variable names from kv store for the passed namespace.
