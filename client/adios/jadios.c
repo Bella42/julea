@@ -48,7 +48,7 @@
  * @{
  **/
 int print_float_data(void* data_pointer);
-int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data);
+void metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data);
 
 int print_float_data(void* data_pointer)
 {
@@ -61,29 +61,29 @@ int print_float_data(void* data_pointer)
 	return 0;
 }
 
-
 /**
  * Put metadata to passed bson file
  *
  * @param [r] metadata   		metadata to be stored
  * @param [r] bson_meta_data 	bson file of kv store
- * @return 						returns 0 on success
  */
-int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
+void
+metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 {
 	/* short BSON HOW TO ---------
 	* http://mongoc.org/libbson/current/bson_t.html
 	* bson_append_utf8 (b, key, (int) strlen (key), (val))
 	* key_length: The length of key in bytes, or -1 to determine the length with strlen(). */
 	//TODO: check return value!
-	bson_append_int64(bson_meta_data, "shape", -1, (unsigned long) metadata->shape);
-	bson_append_int64(bson_meta_data, "start", -1, (unsigned long) metadata->start);
-	bson_append_int64(bson_meta_data, "count", -1, (unsigned long) metadata->count);
-	bson_append_int64(bson_meta_data, "steps_start", -1, metadata->steps_start);
-	bson_append_int64(bson_meta_data, "steps_count", -1, metadata->steps_count);
-	bson_append_bool(bson_meta_data, "is_value", -1, metadata->is_value);
-	bson_append_int64(bson_meta_data, "data_size", -1, metadata->data_size);
-	bson_append_int64(bson_meta_data, "var_type", -1, metadata->var_type);
+	assert(bson_append_int64(bson_meta_data, "shape", -1, (unsigned long) metadata->shape));
+	assert(bson_append_int64(bson_meta_data, "start", -1, (unsigned long) metadata->start));
+	assert(bson_append_int64(bson_meta_data, "count", -1, (unsigned long) metadata->count));
+	assert(bson_append_int64(bson_meta_data, "steps_start", -1, metadata->steps_start));
+	assert(bson_append_int64(bson_meta_data, "steps_count", -1, metadata->steps_count));
+	assert(bson_append_bool(bson_meta_data, "constant_shape", -1, metadata->constant_shape));
+	assert(bson_append_bool(bson_meta_data, "is_value", -1, metadata->is_value));
+	assert(bson_append_int64(bson_meta_data, "data_size", -1, metadata->data_size));
+	assert(bson_append_int64(bson_meta_data, "var_type", -1, metadata->var_type));
 
 	/* now comes the part for "min_value" of type T in C++ */
 	if(metadata->var_type == COMPOUND)
@@ -100,9 +100,9 @@ int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	}
 	else if(metadata->var_type == CHAR)
 	{
-		bson_append_int32(bson_meta_data, "min_value", -1, metadata->min_value.integer);
-		bson_append_int32(bson_meta_data, "max_value", -1, metadata->max_value.integer);
-		bson_append_int32(bson_meta_data, "curr_value", -1, metadata->curr_value.integer);
+		assert(bson_append_int32(bson_meta_data, "min_value", -1, metadata->min_value.integer));
+		assert(bson_append_int32(bson_meta_data, "max_value", -1, metadata->max_value.integer));
+		assert(bson_append_int32(bson_meta_data, "curr_value", -1, metadata->curr_value.integer));
 	}
 	else if(metadata->var_type == SIGNED_CHAR)
 	{
@@ -122,9 +122,9 @@ int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	}
 	else if(metadata->var_type == INT)
 	{
-		bson_append_int64(bson_meta_data, "min_value", -1, metadata->min_value.integer);
-		bson_append_int64(bson_meta_data, "max_value", -1, metadata->max_value.integer);
-		bson_append_int64(bson_meta_data, "curr_value", -1, metadata->curr_value.integer);
+		assert(bson_append_int64(bson_meta_data, "min_value", -1, metadata->min_value.integer));
+		assert(bson_append_int64(bson_meta_data, "max_value", -1, metadata->max_value.integer));
+		assert(bson_append_int64(bson_meta_data, "curr_value", -1, metadata->curr_value.integer));
 	}
 	else if(metadata->var_type == UNSIGNED_INT)
 	{
@@ -143,24 +143,24 @@ int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	}
 	else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
 	{
-		bson_append_decimal128(bson_meta_data, "min_value", -1,
-			(void*) metadata->min_value.ull_integer);
-		bson_append_decimal128(bson_meta_data, "max_value", -1,
-			(void*) metadata->max_value.ull_integer);
-		bson_append_decimal128(bson_meta_data, "curr_value", -1,
-			(void*) metadata->curr_value.ull_integer);
+		assert(bson_append_decimal128(bson_meta_data, "min_value", -1,
+			(void*) metadata->min_value.ull_integer));
+		assert(bson_append_decimal128(bson_meta_data, "max_value", -1,
+			(void*) metadata->max_value.ull_integer));
+		assert(bson_append_decimal128(bson_meta_data, "curr_value", -1,
+			(void*) metadata->curr_value.ull_integer));
 	}
 	else if(metadata->var_type == FLOAT)
 	{
-		bson_append_double(bson_meta_data, "min_value", -1, metadata->min_value.real_float);
-		bson_append_double(bson_meta_data, "max_value", -1, metadata->max_value.real_float);
-		bson_append_double(bson_meta_data, "curr_value", -1, metadata->curr_value.real_float);
+		assert(bson_append_double(bson_meta_data, "min_value", -1, metadata->min_value.real_float));
+		assert(bson_append_double(bson_meta_data, "max_value", -1, metadata->max_value.real_float));
+		assert(bson_append_double(bson_meta_data, "curr_value", -1, metadata->curr_value.real_float));
 	}
 	else if(metadata->var_type == DOUBLE)
 	{
-		bson_append_double(bson_meta_data, "min_value", -1, metadata->min_value.real_double);
-		bson_append_double(bson_meta_data, "max_value", -1, metadata->max_value.real_double);
-		bson_append_double(bson_meta_data, "curr_value", -1, metadata->curr_value.real_double);
+		assert(bson_append_double(bson_meta_data, "min_value", -1, metadata->min_value.real_double));
+		assert(bson_append_double(bson_meta_data, "max_value", -1, metadata->max_value.real_double));
+		assert(bson_append_double(bson_meta_data, "curr_value", -1, metadata->curr_value.real_double));
 	}
 	else if(metadata->var_type == LONG_DOUBLE)
 	{
@@ -174,8 +174,6 @@ int put_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	{
 
 	}
-
-	return 0;
 }
 
 int j_adios_init(JuleaInfo* julea_info)
@@ -270,7 +268,7 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 		printf("Julea Adios Client: Variable %s already in kv store. \n", metadata->name);
 	}
 
-	put_metadata_to_bson(metadata, bson_meta_data);
+	metadata_to_bson(metadata, bson_meta_data);
 	j_kv_put(kv_object_metadata, bson_meta_data, batch);
 	j_kv_put(kv_object_names, bson_names, batch);
 
