@@ -114,6 +114,7 @@ typedef struct Metadata Metadata;
 
 struct JuleaInfo{
 	JSemantics* semantics;
+	char* name_space;
 	//DESIGN: should every io op get a new batch?
 	//where should this be decided in adios? probably...
 
@@ -130,7 +131,7 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 int j_adios_get_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);
 
 /* get metadata from kv store; hopefully soon from SMD backend*/
-int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics);
+int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, unsigned int count_names, JSemantics* semantics);
 int j_adios_get_metadata_from_kv(char* name_space, char* var_name, Metadata* metadata, JSemantics* semantics);
 
 /* get metadata from SMD backend*/

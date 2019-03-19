@@ -22,11 +22,12 @@
 
 #include <julea-config.h>
 
+#include <assert.h>
+#include <bson.h>
 #include <glib.h>
-
 #include <string.h>
 
-#include <bson.h>
+
 
 // #include <item/jitem.h>
 // #include <item/jitem-internal.h>
@@ -74,7 +75,6 @@ metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	* http://mongoc.org/libbson/current/bson_t.html
 	* bson_append_utf8 (b, key, (int) strlen (key), (val))
 	* key_length: The length of key in bytes, or -1 to determine the length with strlen(). */
-	//TODO: check return value!
 	assert(bson_append_int64(bson_meta_data, "shape", -1, (unsigned long) metadata->shape));
 	assert(bson_append_int64(bson_meta_data, "start", -1, (unsigned long) metadata->start));
 	assert(bson_append_int64(bson_meta_data, "count", -1, (unsigned long) metadata->count));
@@ -180,8 +180,7 @@ int j_adios_init(JuleaInfo* julea_info)
 {
 	printf("Julea Adios Client: Init\n");
 
-	//DESIGN: what should happen here?
-	//DESIGN: additional parameters needed?
+	//TODO:create scheme for db
 	// julea_info->semantics = j_semantics_new (J_SEMANTICS_TEMPLATE_POSIX);
 
 	return 0;
@@ -261,7 +260,9 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	/* check if variable name is already in kv store */
 	if(!bson_iter_init_find(b_iter, bson_names, metadata->name))
 	{
-		bson_append_null(bson_names, metadata->name,-1);
+		// ADIOS requires not only the name but also the type of a variable when initialising the variables
+		// bson_append_null(bson_names, metadata->name,-1);
+		bson_append_int32(bson_names, metadata->name,-1, metadata->var_type);
 	}
 	else
 	{
@@ -294,11 +295,12 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
  *
  * @param [r] name_space  namespace of the variables; defined by io.open("namespace")
  * @param [w] names       array to store the retrieved names
+ * @param [w] types       array to store the retrieved variable types
  * @param [w] count_names number of names to retrieve
  * @param [r] semantics   semantics to be used
  * @return             	  returns 0 on success
  */
-int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, unsigned int count_names, JSemantics* semantics)
+int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, unsigned int count_names, JSemantics* semantics)
 {
 	gchar* names_kv;
 	bson_t* bson_names;
@@ -325,6 +327,7 @@ int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, unsigned 
 			printf("ERROR: count of names does not match \n");
 		}
 		names[i] = g_strdup(bson_iter_key(b_iter));
+		types[i] = bson_iter_int32(b_iter);
 	}
 
 	g_free(names_kv);
