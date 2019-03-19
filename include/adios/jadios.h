@@ -112,6 +112,14 @@ struct Metadata{
 };
 typedef struct Metadata Metadata;
 
+struct AttributeMetadata
+{
+	char* name;
+	variable_type attr_type;
+	size_t number_elements;
+	bool is_single_value;
+}
+
 struct JuleaInfo{
 	JSemantics* semantics;
 	char* name_space; //unique engine name within m_IO
