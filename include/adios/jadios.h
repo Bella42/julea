@@ -112,6 +112,16 @@ struct Metadata{
 };
 typedef struct Metadata Metadata;
 
+struct AttributeMetadata
+{
+	char* name;
+	variable_type attr_type;
+	size_t number_elements;
+	bool is_single_value;
+	guint data_size; //DESIGN: data_size?
+};
+typedef struct AttributeMetadata AttributeMetadata;
+
 struct JuleaInfo{
 	JSemantics* semantics;
 	char* name_space;
@@ -125,14 +135,22 @@ int j_adios_init(JuleaInfo* julea_info); //DESIGN: param needed?
 int j_adios_finish(void);
 
 /* performs data put AND metadata put*/
-int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch);
+int j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch);
+
+/* performs data put AND metadata put*/
+int j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, void* data_pointer, JBatch* batch, gboolean use_batch);
 
 /* get data from object store*/
-int j_adios_get_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);
+int j_adios_get_var_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);
+int j_adios_get_attr_data(char* name_space, char* attribute_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);
 
 /* get metadata from kv store; hopefully soon from SMD backend*/
 int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, unsigned int count_names, JSemantics* semantics);
-int j_adios_get_metadata_from_kv(char* name_space, char* var_name, Metadata* metadata, JSemantics* semantics);
+int j_adios_get_var_metadata_from_kv(char* name_space, char* var_name, Metadata* metadata, JSemantics* semantics);
+
+/* get attributes from kv store; in future from SMD?! */
+int j_adios_get_all_attr_names_from_kv(char* name_space, char*** names, int** types, unsigned int count_names, JSemantics* semantics);
+int j_adios_get_attr_metadata_from_kv(char* name_space, char* var_name, AttributeMetadata* attr_metadata, JSemantics* semantics);
 
 /* get metadata from SMD backend*/
 int j_adios_get_all_var_names(char* name_space, char*** names, JSemantics* semantics);

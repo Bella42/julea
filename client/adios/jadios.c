@@ -49,7 +49,8 @@
  * @{
  **/
 int print_float_data(void* data_pointer);
-void metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data);
+void var_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data);
+void attr_metadata_to_bson(AttributeMetadata* attr_metadata, bson_t* bson_meta_data);
 
 int print_float_data(void* data_pointer)
 {
@@ -69,7 +70,7 @@ int print_float_data(void* data_pointer)
  * @param [r] bson_meta_data 	bson file of kv store
  */
 void
-metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
+var_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 {
 	/* short BSON HOW TO ---------
 	* http://mongoc.org/libbson/current/bson_t.html
@@ -176,6 +177,20 @@ metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	}
 }
 
+/**
+ * Put attribute metadata to passed bson file
+ *
+ * @param [r] metadata   		metadata to be stored
+ * @param [r] bson_meta_data 	bson file of kv store
+ */
+void
+attr_metadata_to_bson(AttributeMetadata* attr_metadata, bson_t* bson_meta_data)
+{
+	assert(bson_append_int64(bson_meta_data, "var_type", -1, attr_metadata->attr_type));
+	assert(bson_append_int64(bson_meta_data, "number_elements", -1, attr_metadata->number_elements));
+	assert(bson_append_bool(bson_meta_data, "is_single_value", -1, attr_metadata->is_single_value));
+}
+
 int j_adios_init(JuleaInfo* julea_info)
 {
 	printf("Julea Adios Client: Init\n");
@@ -207,7 +222,7 @@ int j_adios_finish(void)
  * @param [r] use_batch    	pass false when using deferred/asynchronous I/O; true for synchronous I/O
  * @return              	return 0 on success
  */
-int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch)
+int j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch)
 {
 	JBatch *batch_2;
 	guint64 bytes_written = 0; //nb = bytes written; see benchmark
@@ -245,8 +260,9 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 		 bytes_written , metadata->data_size);
 	}
 
+	//FIXME: name scheme for stores
 	name_metadata_kv = g_strdup_printf("%s_%s", name_space, metadata->name);
-	name_names_kv = g_strdup_printf("names_%s", name_space);
+	name_names_kv = g_strdup_printf("variable_names_%s", name_space);
 
 	kv_object_metadata = j_kv_new("adios_metadata", name_metadata_kv);
 	kv_object_names = j_kv_new("adios_variable_names", name_names_kv);
@@ -269,7 +285,7 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 		printf("Julea Adios Client: Variable %s already in kv store. \n", metadata->name);
 	}
 
-	metadata_to_bson(metadata, bson_meta_data);
+	var_metadata_to_bson(metadata, bson_meta_data);
 	j_kv_put(kv_object_metadata, bson_meta_data, batch);
 	j_kv_put(kv_object_names, bson_names, batch);
 
@@ -285,9 +301,93 @@ int j_adios_put(char* name_space, Metadata* metadata, void* data_pointer, JBatch
 	g_free(name_names_kv);
 	g_free(name_data_object);
 
-	printf("Julea Adios Client: Put\n");
+	printf("Julea Adios Client: Put Variable \n");
 	return 0;
 }
+
+
+int j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, void* data_pointer, JBatch* batch, gboolean use_batch)
+{
+	JBatch *batch_2;
+	guint64 bytes_written = 0; //nb = bytes written; see benchmark
+
+	bson_iter_t *b_iter = NULL;
+	bson_t* bson_meta_data;
+	bson_t* bson_names;
+
+	g_autoptr(JKV) kv_object_metadata = NULL;
+	g_autoptr(JKV) kv_object_names = NULL;
+	g_autoptr(JObject) data_object = NULL;
+
+	gchar *name_metadata_kv;
+	gchar *name_names_kv;
+	gchar *name_data_object;
+
+	batch_2 = j_batch_new(j_batch_get_semantics(batch));
+
+	// print_float_data(data_pointer);
+
+	name_data_object = g_strdup_printf("%s_attributes_%s", name_space, attr_metadata->name);
+	data_object = j_object_new(name_data_object, attr_metadata->name);
+	j_object_create(data_object, batch);
+	// printf("Julea Adios Client: Object create \n");
+
+	j_object_write(data_object, data_pointer, attr_metadata->data_size, 0, &bytes_written, batch);
+
+	if(bytes_written == attr_metadata->data_size)
+	{
+		printf("Julea Adios Client: Data written for attribute '%s' \n", attr_metadata->name);
+	}
+	else
+	{
+		printf("WARNING: only %ld bytes written instead of %d bytes! \n",
+		 bytes_written , attr_metadata->data_size);
+	}
+
+	name_metadata_kv = g_strdup_printf("%s_attributes_%s", name_space, attr_metadata->name);
+	name_names_kv = g_strdup_printf("%s_attributes_names", name_space);
+
+	kv_object_metadata = j_kv_new(name_metadata_kv, attr_metadata->name);
+	kv_object_names = j_kv_new(name_names_kv, attr_metadata->name);
+
+	bson_meta_data = bson_new();
+	bson_names = bson_new();
+
+	j_kv_get(kv_object_names, bson_names, batch_2);
+	j_batch_execute(batch_2);
+
+	/* check if variable name is already in kv store */
+	if(!bson_iter_init_find(b_iter, bson_names, attr_metadata->name))
+	{
+		// ADIOS requires not only the name but also the type of a variable when initialising the variables
+		// bson_append_null(bson_names, metadata->name,-1);
+		bson_append_int32(bson_names, attr_metadata->name,-1, attr_metadata->attr_type);
+	}
+	else
+	{
+		printf("Julea Adios Client: Attribute %s already in kv store. \n", attr_metadata->name);
+	}
+
+	attr_metadata_to_bson(attr_metadata, bson_meta_data);
+	j_kv_put(kv_object_metadata, bson_meta_data, batch);
+	j_kv_put(kv_object_names, bson_names, batch);
+
+	//j_smd_put_metadata(name_space, metadata, batch); //TODO use SMD backend
+
+	if(use_batch)
+	{
+		j_batch_execute(batch); //DESIGN: where should this be? how often?
+		printf("Julea Adios Client: Batch execute \n");
+	}
+
+	g_free(name_metadata_kv);
+	g_free(name_names_kv);
+	g_free(name_data_object);
+
+	printf("Julea Adios Client: Put Attribute \n");
+	return 0;
+}
+
 
 
 /**
@@ -310,6 +410,7 @@ int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** typ
 
 	JBatch* batch = j_batch_new(semantics);
 
+	//FIXME: name scheme for store
 	names_kv = g_strdup_printf("adios_names_kv_%s", name_space);
 	kv_object = j_kv_new("adios_variable_names", names_kv);
 	bson_names = bson_new();
@@ -317,7 +418,8 @@ int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** typ
 	j_kv_get(kv_object, bson_names, batch);
 	count_names = bson_count_keys(bson_names);
 
-	names = g_slice_alloc(count_names* sizeof(char*));
+	*names = g_slice_alloc(count_names* sizeof(char*));
+	*types = g_slice_alloc(count_names* sizeof(int));
 	bson_iter_init(b_iter, bson_names);
 
 	for(unsigned int i = 0; i < count_names; i++)
@@ -326,8 +428,8 @@ int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** typ
 		{
 			printf("ERROR: count of names does not match \n");
 		}
-		names[i] = g_strdup(bson_iter_key(b_iter));
-		types[i] = bson_iter_int32(b_iter);
+		(*names)[i] = g_strdup(bson_iter_key(b_iter));
+		(*types)[i] = bson_iter_int32(b_iter);
 	}
 
 	g_free(names_kv);
@@ -343,7 +445,7 @@ int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** typ
  * @param [r] semantics  	semantics to be used
  * @return            		returns 0 on success
  */
-int j_adios_get_metadata_from_kv(char* name_space, char *var_name, Metadata* metadata, JSemantics* semantics)
+int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* metadata, JSemantics* semantics)
 {
 	JBatch* batch;
 	gchar* metadata_kv;
@@ -353,6 +455,7 @@ int j_adios_get_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 	g_autoptr(JKV) kv_object = NULL;
 	batch = j_batch_new(semantics);
 
+	//FIXME: name scheme for store
 	metadata_kv = g_strdup_printf("%s_%s", name_space, var_name);
 	kv_object = j_kv_new("adios_metadata", metadata_kv);
 	bson_metadata = bson_new();
@@ -471,9 +574,96 @@ int j_adios_get_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 	}
 
 	g_free(metadata_kv);
-	printf("Julea Adios Client: Get Metadata \n");
+	printf("Julea Adios Client: Get Variable Metadata \n");
 	return 0;
 }
+
+/** see get_all_var_names_from kv for param description */
+int j_adios_get_all_attr_names_from_kv(char* name_space, char*** names, int** types, unsigned int count_names, JSemantics* semantics)
+{
+	gchar* name_names_kv;
+	bson_t* bson_names;
+	bson_iter_t* b_iter = NULL;
+
+	g_autoptr(JKV) kv_object = NULL;
+
+	JBatch* batch = j_batch_new(semantics);
+
+	//FIXME: name scheme for store
+	name_names_kv = g_strdup_printf("%s_attributes_names", name_space);
+	kv_object = j_kv_new(name_names_kv, name_space);
+	bson_names = bson_new();
+
+	j_kv_get(kv_object, bson_names, batch);
+	count_names = bson_count_keys(bson_names);
+
+	*names = g_slice_alloc(count_names* sizeof(char*));
+	*types = g_slice_alloc(count_names* sizeof(int));
+	bson_iter_init(b_iter, bson_names);
+
+	for(unsigned int i = 0; i < count_names; i++)
+	{
+		if(!bson_iter_next(b_iter))
+		{
+			printf("ERROR: count of names does not match \n");
+		}
+		(*names)[i] = g_strdup(bson_iter_key(b_iter));
+		(*types)[i] = bson_iter_int32(b_iter);
+	}
+
+	g_free(name_names_kv);
+	return 0;
+}
+
+/** see get_all_metadata_from kv for param description */
+int j_adios_get_attr_metadata_from_kv(char* name_space, char* attr_name, AttributeMetadata* attr_metadata, JSemantics* semantics)
+{
+	JBatch* batch;
+	gchar* name_metadata_kv;
+	bson_t* bson_metadata;
+	bson_iter_t* b_iter = NULL;
+
+	g_autoptr(JKV) kv_object = NULL;
+	batch = j_batch_new(semantics);
+
+	//FIXME: name scheme for store
+	name_metadata_kv = g_strdup_printf("%s_attributes_%s", name_space, attr_name);
+	kv_object = j_kv_new(name_metadata_kv, attr_name);
+	bson_metadata = bson_new();
+
+	j_kv_get(kv_object, bson_metadata, batch);
+	bson_iter_init(b_iter, bson_metadata);
+
+	/* probably not very efficient */
+	while(bson_iter_next(b_iter))
+	{
+		if(g_strcmp0(bson_iter_key(b_iter),"attr_type") == 0)
+		{
+			attr_metadata->attr_type = bson_iter_int32(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"number_elements") == 0)
+		{
+			attr_metadata->number_elements = bson_iter_int64(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"is_single_value") == 0)
+		{
+			attr_metadata->is_single_value = (bool) bson_iter_bool(b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(b_iter),"data_size") == 0)
+		{
+			attr_metadata->data_size = bson_iter_int64(b_iter);
+		}
+		else
+		{
+			printf("Unknown key '%s' when retrieving metadata for attribute %s\n", bson_iter_key(b_iter), attr_metadata->name);
+		}
+	}
+
+	g_free(name_metadata_kv);
+	printf("Julea Adios Client: Get Attribute Metadata \n");
+	return 0;
+}
+
 
 /**
  * Get all variables for the passed namespace.
@@ -531,7 +721,6 @@ int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* seman
 	return 0;
 }
 
-
 /**
  * Get the data for the passed variable from object store.
  *
@@ -543,8 +732,9 @@ int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* seman
  * @param [r] use_batch     pass false when using deferred/asynchronous I/O; true for synchronous I/O
  * @return               	returns 0 on success
  */
-int j_adios_get_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch)
+int j_adios_get_var_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch)
 {
+
 	guint64 bytes_read = 0; //nb = bytes written; see benchmark
 	g_autoptr(JObject) data_object = NULL;
 	gchar *name_data_object;
@@ -568,6 +758,45 @@ int j_adios_get_data(char* name_space, char* variable_name, unsigned int length,
 	}
 	return 0;
 }
+
+/**
+ * Get the data for the passed attribute from object store.
+ *
+ * @param [r] name_space    namespace of variable; defined in io.open("namespace")
+ * @param [r] variable_name name of variable
+ * @param [r] length        number of bytes to read
+ * @param [w] data_pointer  pointer to return data
+ * @param [r] batch         batch to execute this operation in
+ * @param [r] use_batch     pass false when using deferred/asynchronous I/O; true for synchronous I/O
+ * @return               	returns 0 on success
+ */
+int j_adios_get_attr_data(char* name_space, char* attribute_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch)
+{
+	guint64 bytes_read = 0; //nb = bytes written; see benchmark
+	g_autoptr(JObject) data_object = NULL;
+	gchar *name_data_object;
+	name_data_object = g_strdup_printf("%s_attributes_%s", name_space,attribute_name);
+
+	data_object = j_object_new(name_data_object, attribute_name);
+	j_object_read(data_object, data_pointer, length, 0, &bytes_read, batch);
+	if(bytes_read == length)
+	{
+		printf("Julea Adios Client: Read data for variable '%s' \n", attribute_name);
+	}
+	else
+	{
+		printf("WARNING: only %ld bytes read instead of %d bytes! \n",bytes_read, length);
+	}
+
+	if(use_batch)
+	{
+		j_batch_execute(batch); //DESIGN: where should this be? how often?
+		printf("Julea Adios Client: Batch execute \n");
+	}
+	return 0;
+}
+
+
 
 /**
  * Delete variable and according metadata.
