@@ -87,28 +87,63 @@ typedef union value_type value_type;
  * TODO: namespace?!
  *
  */
-struct Metadata{
 	// char* name_space; //IO.open("namespace") = Unique name for Engine within m_IO
+struct Metadata{
 	char* name;
 	const unsigned long* shape;
-	const unsigned long*  start;
-	const unsigned long*  count;
+	const unsigned long* start;
+	const unsigned long* count;
+	const unsigned long* memory_start; //FIXME: implement!
+	const unsigned long* memory_count; //FIXME: implement!
 
 	size_t steps_start;
 	size_t steps_count;
-	bool constant_shape;
-	bool is_value;
+	size_t block_id;	//FIXME: implement!
 
-	guint data_size;
 	variable_type var_type;
 
-	union value_type min_value;
-	union value_type max_value;
-	union value_type curr_value;
+	value_type min_value;
+	value_type max_value;
+	value_type curr_value;
+
+
+	bool is_value;
+	guint data_size;		//FIXME: currently hardcoded in writer
+
+	/* -------------------- VariableBase ------------------- */
+    const size_t m_ElementSize;
+
+	bool is_constant_shape;	//FIXME: new name! -> was constant_shape
+	bool is_single_value;	//FIXME: implement!
+	bool is_constant_dims; //FIXME: implement! //protected in VariableBase.h
+	unsigned int deferred_counter; //FIXME: implement!
+
+    // ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
+    ///< current block ID for local variables, global = 0
+    // SelectionType m_SelectionType = SelectionType::BoundingBox;
+
+    /** Global array was written as Joined array, so read accordingly */
+    bool is_read_as_joined; //FIXME: implement!
+
+    /** Global array was written as Local value, so read accordingly */
+    bool is_read_as_local_value; //FIXME: implement!
+
+    /** For read mode, false: streaming */
+    bool is_random_access; //FIXME: implement!
+
+    /** used in streaming mode, true: first variable encounter, false: variable
+     * already encountered in previous step */
+    bool is_first_streaming_step; //FIXME: implement!
+
+    //Operation struct
 
 	//operations -> how are these used? necessary for structured backend?
 	//std::map<size_t, std::vector<helper::SubStreamBoxInfo>>
     //        StepBlockSubStreamsInfo;
+
+    size_t available_steps_start; //FIXME: implement!
+    size_t available_steps_count; //FIXME: implement!
+    size_t index_start; //FIXME: implement!
 };
 typedef struct Metadata Metadata;
 
@@ -139,6 +174,7 @@ int j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointe
 
 /* performs data put AND metadata put*/
 int j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, void* data_pointer, JBatch* batch, gboolean use_batch);
+int j_adios_put_single_attribute(char* name_space, AttributeMetadata* attr_metadata, void* data, JBatch* batch, gboolean use_batch);
 
 /* get data from object store*/
 int j_adios_get_var_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);

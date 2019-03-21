@@ -81,7 +81,7 @@ var_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	assert(bson_append_int64(bson_meta_data, "count", -1, (unsigned long) metadata->count));
 	assert(bson_append_int64(bson_meta_data, "steps_start", -1, metadata->steps_start));
 	assert(bson_append_int64(bson_meta_data, "steps_count", -1, metadata->steps_count));
-	assert(bson_append_bool(bson_meta_data, "constant_shape", -1, metadata->constant_shape));
+	assert(bson_append_bool(bson_meta_data, "is_constant_shape", -1, metadata->is_constant_shape));
 	assert(bson_append_bool(bson_meta_data, "is_value", -1, metadata->is_value));
 	assert(bson_append_int64(bson_meta_data, "data_size", -1, metadata->data_size));
 	assert(bson_append_int64(bson_meta_data, "var_type", -1, metadata->var_type));
