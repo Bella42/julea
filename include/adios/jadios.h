@@ -90,15 +90,26 @@ typedef union value_type value_type;
 	// char* name_space; //IO.open("namespace") = Unique name for Engine within m_IO
 struct Metadata{
 	char* name;
-	const unsigned long* shape;
-	const unsigned long* start;
-	const unsigned long* count;
-	const unsigned long* memory_start; //FIXME: implement!
-	const unsigned long* memory_count; //FIXME: implement!
+
+	unsigned long* shape; //FIXME: vector length; store in bson-> for
+	unsigned long* start;
+	unsigned long* count;
+	unsigned long* memory_start; //FIXME: implement!
+	unsigned long* memory_count; //FIXME: implement!
+
+	unsigned long shape_size; //FIXME: implement!
+	unsigned long start_size; //FIXME: implement!
+	unsigned long count_size; //FIXME: implement!
+	unsigned long memory_start_size; //FIXME: implement!
+	unsigned long memory_count_size; //FIXME: implement!
 
 	size_t steps_start;
 	size_t steps_count;
 	size_t block_id;	//FIXME: implement!
+    size_t index_start; //VariableBase.h FIXME: implement!
+    size_t element_size; //VariableBase.h FIXME: implement!
+    size_t available_steps_start; //VariableBase.h FIXME: implement!
+    size_t available_steps_count; //VariableBase.h FIXME: implement!
 
 	variable_type var_type;
 
@@ -106,34 +117,21 @@ struct Metadata{
 	value_type max_value;
 	value_type curr_value;
 
+	unsigned int data_size;		//FIXME: currently hardcoded in writer
+	// unsigned int deferred_counter; //VariableBase.h FIXME: implement!
 
 	bool is_value;
-	guint data_size;		//FIXME: currently hardcoded in writer
+	bool is_single_value;	//VariableBase.h FIXME: implement!
+	bool is_constant_dims; //VariableBase.h FIXME: implement! //protected
+    bool is_read_as_joined; //VariableBase.h FIXME: implement!
+    bool is_read_as_local_value; //VariableBase.h FIXME: implement!
+    bool is_random_access; //VariableBase.h FIXME: implement!
+    bool is_first_streaming_step; //VariableBase.h FIXME: implement!
 
-	/* -------------------- VariableBase ------------------- */
-    const size_t m_ElementSize;
-
-	bool is_constant_shape;	//FIXME: new name! -> was constant_shape
-	bool is_single_value;	//FIXME: implement!
-	bool is_constant_dims; //FIXME: implement! //protected in VariableBase.h
-	unsigned int deferred_counter; //FIXME: implement!
 
     // ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
     ///< current block ID for local variables, global = 0
     // SelectionType m_SelectionType = SelectionType::BoundingBox;
-
-    /** Global array was written as Joined array, so read accordingly */
-    bool is_read_as_joined; //FIXME: implement!
-
-    /** Global array was written as Local value, so read accordingly */
-    bool is_read_as_local_value; //FIXME: implement!
-
-    /** For read mode, false: streaming */
-    bool is_random_access; //FIXME: implement!
-
-    /** used in streaming mode, true: first variable encounter, false: variable
-     * already encountered in previous step */
-    bool is_first_streaming_step; //FIXME: implement!
 
     //Operation struct
 
@@ -141,9 +139,6 @@ struct Metadata{
 	//std::map<size_t, std::vector<helper::SubStreamBoxInfo>>
     //        StepBlockSubStreamsInfo;
 
-    size_t available_steps_start; //FIXME: implement!
-    size_t available_steps_count; //FIXME: implement!
-    size_t index_start; //FIXME: implement!
 };
 typedef struct Metadata Metadata;
 
@@ -181,7 +176,7 @@ int j_adios_get_var_data(char* name_space, char* variable_name, unsigned int len
 int j_adios_get_attr_data(char* name_space, char* attribute_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);
 
 /* get metadata from kv store; hopefully soon from SMD backend*/
-int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, unsigned int count_names, JSemantics* semantics);
+int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, unsigned int* count_names, JSemantics* semantics);
 int j_adios_get_var_metadata_from_kv(char* name_space, char* var_name, Metadata* metadata, JSemantics* semantics);
 
 /* get attributes from kv store; in future from SMD?! */

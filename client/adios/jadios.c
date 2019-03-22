@@ -76,12 +76,12 @@ var_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	* http://mongoc.org/libbson/current/bson_t.html
 	* bson_append_utf8 (b, key, (int) strlen (key), (val))
 	* key_length: The length of key in bytes, or -1 to determine the length with strlen(). */
-	assert(bson_append_int64(bson_meta_data, "shape", -1, (unsigned long) metadata->shape));
-	assert(bson_append_int64(bson_meta_data, "start", -1, (unsigned long) metadata->start));
-	assert(bson_append_int64(bson_meta_data, "count", -1, (unsigned long) metadata->count));
+	assert(bson_append_int64(bson_meta_data, "shape", -1, *metadata->shape));
+	assert(bson_append_int64(bson_meta_data, "start", -1, *metadata->start));
+	assert(bson_append_int64(bson_meta_data, "count", -1, *metadata->count));
 	assert(bson_append_int64(bson_meta_data, "steps_start", -1, metadata->steps_start));
 	assert(bson_append_int64(bson_meta_data, "steps_count", -1, metadata->steps_count));
-	assert(bson_append_bool(bson_meta_data, "is_constant_shape", -1, metadata->is_constant_shape));
+	assert(bson_append_bool(bson_meta_data, "is_constant_dims", -1, metadata->is_constant_dims));
 	assert(bson_append_bool(bson_meta_data, "is_value", -1, metadata->is_value));
 	assert(bson_append_int64(bson_meta_data, "data_size", -1, metadata->data_size));
 	assert(bson_append_int64(bson_meta_data, "var_type", -1, metadata->var_type));
@@ -240,8 +240,9 @@ int j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointe
 	g_autoptr(JObject) data_object = NULL;
 
 	gchar *string_metadata_kv;
-	gchar *string_names_kv;
+	//gchar *string_names_kv;
 	gchar *string_data_object;
+	gchar* json;
 
 	batch_2 = j_batch_new(j_batch_get_semantics(batch));
 
@@ -254,21 +255,12 @@ int j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointe
 
 	j_object_write(data_object, data_pointer, metadata->data_size, 0, &bytes_written, batch);
 
-	// if(bytes_written == metadata->data_size)
-	// {
-	// 	printf("Julea Adios Client: Data written for variable '%s' \n", metadata->name);
-	// }
-	// else
-	// {
-		printf("WARNING: only %ld bytes written instead of %d bytes! \n",
-		 bytes_written , metadata->data_size);
-	// }
 
 	//FIXME: name scheme for stores
-	string_metadata_kv = g_strdup_printf("%s_variables_%s", name_space, metadata->name);
-	string_names_kv = g_strdup_printf("variable_names_%s", name_space);
+	string_metadata_kv = g_strdup_printf("variables_%s", name_space);
+	//string_names_kv = g_strdup_printf("variable_names_%s", name_space);
 	kv_object_metadata = j_kv_new(string_metadata_kv, metadata->name);
-	kv_object_names = j_kv_new(string_names_kv, name_space);
+	kv_object_names = j_kv_new("variable_names", name_space);
 
 	bson_meta_data = bson_new();
 	bson_names = bson_new();
@@ -293,10 +285,12 @@ int j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointe
 		printf("Julea Adios Client: Variable %s already in kv store. \n", metadata->name);
 	}
 
+	json = bson_as_canonical_extended_json(bson_names, NULL);
+	g_print("bson_names before put %s\n", json);
+
 	var_metadata_to_bson(metadata, bson_meta_data);
 	j_kv_put(kv_object_metadata, bson_meta_data, batch);
 	j_kv_put(kv_object_names, bson_names, batch);
-
 	//j_smd_put_metadata(name_space, metadata, batch); //TODO use SMD backend
 	if(use_batch)
 	{
@@ -307,9 +301,18 @@ int j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointe
 		printf("Julea Adios Client: Batch execute \n");
 	}
 
+	// if(bytes_written == metadata->data_size)
+	// {
+	// 	printf("Julea Adios Client: Data written for variable '%s' \n", metadata->name);
+	// }
+	// else
+	// {
+		printf("WARNING: only %ld bytes written instead of %d bytes! \n",
+		 bytes_written , metadata->data_size);
+	// }
 		printf("JADIOS: DEBUG PRINT 2\n");
 	g_free(string_metadata_kv);
-	g_free(string_names_kv);
+	//g_free(string_names_kv);
 	g_free(string_data_object);
 
 	printf("Julea Adios Client: Put Variable \n");
@@ -419,33 +422,38 @@ int j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, vo
  * @param [r] semantics   semantics to be used
  * @return             	  returns 0 on success
  */
-int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, unsigned int count_names, JSemantics* semantics)
+int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, unsigned int* count_names, JSemantics* semantics)
 {
 	printf("JULEA: get_all_var_names_from_kv DEBUG PRINT 0\n");
-	gchar* string_names_kv;
+	//gchar* string_names_kv;
 	bson_t* bson_names;
 	bson_iter_t b_iter;
+
+	char* json;
 
 	g_autoptr(JKV) kv_object = NULL;
 
 	JBatch* batch = j_batch_new(semantics);
 	//FIXME: name scheme for store
-	string_names_kv = g_strdup_printf("%s_variable_names%s", name_space);
-	kv_object = j_kv_new(string_names_kv, name_space);
+	//string_names_kv = g_strdup_printf("%s_variable_names%s", name_space);
+	kv_object = j_kv_new("variable_names", name_space);
 	bson_names = bson_new();
 
 	j_kv_get(kv_object, bson_names, batch);
-	count_names = bson_count_keys(bson_names);
+	j_batch_execute(batch);
+	json = bson_as_canonical_extended_json(bson_names, NULL);
+	g_print("bson_names after get %s \n",json);
+	*count_names = bson_count_keys(bson_names);
 
-	*names = g_slice_alloc(count_names* sizeof(char*));
-	*types = g_slice_alloc(count_names* sizeof(int));
+	*names = g_slice_alloc(*count_names * sizeof(char*));
+	*types = g_slice_alloc(*count_names * sizeof(int));
 	bson_iter_init(&b_iter, bson_names);
 
 	printf("JULEA: get_all_var_names_from_kv DEBUG PRINT 1\n");
-	printf("JULEA: count_names %d \n", count_names);
+	printf("JULEA: count_names %d \n", *count_names);
 
 
-	for(unsigned int i = 0; i < count_names; i++)
+	for(unsigned int i = 0; i < *count_names; i++)
 	{
 	printf("JULEA: get_all_var_names_from_kv DEBUG PRINT 2\n");
 		if(!bson_iter_next(&b_iter))
@@ -454,11 +462,11 @@ int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** typ
 		}
 		(*names)[i] = g_strdup(bson_iter_key(&b_iter));
 		(*types)[i] = bson_iter_int32(&b_iter);
-		printf("JULEA: get_all_var_names_from_kv DEBUG PRINT: %s\n", *names[i]);
-		printf("JULEA: types DEBUG PRINT: %d\n", *types[i]);
+		printf("JULEA: get_all_var_names_from_kv DEBUG PRINT: %s\n", (*names)[i]);
+		printf("JULEA: types DEBUG PRINT: %d\n", (*types)[i]);
 	}
 
-	g_free(string_names_kv);
+	//g_free(string_names_kv);
 	return 0;
 }
 
@@ -476,126 +484,133 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 	JBatch* batch;
 	gchar* string_metadata_kv;
 	bson_t* bson_metadata;
-	bson_iter_t* b_iter = NULL;
+	bson_iter_t b_iter;
 
 	g_autoptr(JKV) kv_object = NULL;
 	batch = j_batch_new(semantics);
 
 	//FIXME: name scheme for store
-	string_metadata_kv = g_strdup_printf("%s_variables_%s", name_space, var_name);
-	kv_object = j_kv_new(string_metadata_kv, metadata->name);
+	string_metadata_kv = g_strdup_printf("variables_%s", name_space);
+	kv_object = j_kv_new(string_metadata_kv, var_name);
 	bson_metadata = bson_new();
 
 	j_kv_get(kv_object, bson_metadata, batch);
-	bson_iter_init(b_iter, bson_metadata);
+	j_batch_execute(batch);
+
+	bson_iter_init(&b_iter, bson_metadata);
 
 	/* probably not very efficient */
-	while(bson_iter_next(b_iter))
+	while(bson_iter_next(&b_iter))
 	{
-		if(g_strcmp0(bson_iter_key(b_iter),"shape") == 0)
+		if(g_strcmp0(bson_iter_key(&b_iter),"shape") == 0)
 		{
-			metadata->shape = (unsigned long*) bson_iter_int64(b_iter);
+			//FIXME: for
+			*metadata->shape = bson_iter_int64(&b_iter);
 		}
-		else if(g_strcmp0(bson_iter_key(b_iter),"start") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"start") == 0)
 		{
-			metadata->start = (unsigned long*) bson_iter_int64(b_iter);
+			*metadata->start = bson_iter_int64(&b_iter);
 		}
-		else if(g_strcmp0(bson_iter_key(b_iter),"count") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"count") == 0)
 		{
-			metadata->count = (unsigned long*) bson_iter_int64(b_iter);
+			*metadata->count = bson_iter_int64(&b_iter);
 		}
-		else if(g_strcmp0(bson_iter_key(b_iter),"steps_start") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"steps_start") == 0)
 		{
-			metadata->steps_start = bson_iter_int64(b_iter);
+			metadata->steps_start = bson_iter_int64(&b_iter);
 		}
-		else if(g_strcmp0(bson_iter_key(b_iter),"steps_count") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"steps_count") == 0)
 		{
-			metadata->steps_count = bson_iter_int64(b_iter);
+			metadata->steps_count = bson_iter_int64(&b_iter);
 		}
-		else if(g_strcmp0(bson_iter_key(b_iter),"is_value") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"is_value") == 0)
 		{
-			metadata->is_value = (bool) bson_iter_bool(b_iter);
+			metadata->is_value = (bool) bson_iter_bool(&b_iter);
 		}
-		else if(g_strcmp0(bson_iter_key(b_iter),"data_size") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"data_size") == 0)
 		{
-			metadata->data_size = bson_iter_int64(b_iter);
+			metadata->data_size = bson_iter_int64(&b_iter);
 		}
-		else if(g_strcmp0(bson_iter_key(b_iter),"var_type") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"var_type") == 0)
 		{
-			metadata->var_type = (int) bson_iter_int64(b_iter);
+			metadata->var_type = (int) bson_iter_int64(&b_iter);
 		}
-		else if(g_strcmp0(bson_iter_key(b_iter),"min_value") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"min_value") == 0)
 		{
 			if(metadata->var_type == CHAR)
 			{
-				metadata->min_value.character = bson_iter_int32(b_iter);
+				metadata->min_value.character = bson_iter_int32(&b_iter);
 			}
 			else if(metadata->var_type == INT)
 			{
-				metadata->min_value.integer = bson_iter_int64(b_iter);
+				metadata->min_value.integer = bson_iter_int64(&b_iter);
 			}
 			else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
 			{
-				bson_iter_decimal128(b_iter, (bson_decimal128_t*) metadata->min_value.ull_integer);
+				bson_iter_decimal128(&b_iter, (bson_decimal128_t*) metadata->min_value.ull_integer);
 			}
 			else if(metadata->var_type == FLOAT)
 			{
-				metadata->min_value.real_float = bson_iter_double(b_iter);
+				metadata->min_value.real_float = bson_iter_double(&b_iter);
 			}
 			else if(metadata->var_type == DOUBLE)
 			{
-				metadata->min_value.real_double = bson_iter_double(b_iter);
+				metadata->min_value.real_double = bson_iter_double(&b_iter);
 			}
 		}
-		else if(g_strcmp0(bson_iter_key(b_iter),"max_value") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"max_value") == 0)
 		{
 			if(metadata->var_type == CHAR)
 			{
-				metadata->max_value.character = bson_iter_int32(b_iter);
+				metadata->max_value.character = bson_iter_int32(&b_iter);
 			}
 			else if(metadata->var_type == INT)
 			{
-				metadata->max_value.integer = bson_iter_int64(b_iter);
+				metadata->max_value.integer = bson_iter_int64(&b_iter);
 			}
 			else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
 			{
-				bson_iter_decimal128(b_iter,(bson_decimal128_t*) metadata->max_value.ull_integer);
+				bson_iter_decimal128(&b_iter,(bson_decimal128_t*) metadata->max_value.ull_integer);
 			}
 			else if(metadata->var_type == FLOAT)
 			{
-				metadata->max_value.real_float = (float) bson_iter_double(b_iter);
+				metadata->max_value.real_float = (float) bson_iter_double(&b_iter);
 			}
 			else if(metadata->var_type == DOUBLE)
 			{
-				metadata->max_value.real_double = bson_iter_double(b_iter);
+				metadata->max_value.real_double = bson_iter_double(&b_iter);
 			}
 		}
-		else if(g_strcmp0(bson_iter_key(b_iter),"curr_value") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"curr_value") == 0)
 		{
 			if(metadata->var_type == CHAR)
 			{
-				metadata->curr_value.character = bson_iter_int32(b_iter);
+				metadata->curr_value.character = bson_iter_int32(&b_iter);
 			}
 			else if(metadata->var_type == INT)
 			{
-				metadata->curr_value.integer = bson_iter_int64(b_iter);
+				metadata->curr_value.integer = bson_iter_int64(&b_iter);
 			}
 			else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
 			{
-				bson_iter_decimal128(b_iter,(bson_decimal128_t*) metadata->curr_value.ull_integer);
+				bson_iter_decimal128(&b_iter,(bson_decimal128_t*) metadata->curr_value.ull_integer);
 			}
 			else if(metadata->var_type == FLOAT)
 			{
-				metadata->curr_value.real_float = (float) bson_iter_double(b_iter);
+				metadata->curr_value.real_float = (float) bson_iter_double(&b_iter);
 			}
 			else if(metadata->var_type == DOUBLE)
 			{
-				metadata->curr_value.real_double = bson_iter_double(b_iter);
+				metadata->curr_value.real_double = bson_iter_double(&b_iter);
 			}
+		}
+		else if(g_strcmp0(bson_iter_key(&b_iter),"is_constant_dims") == 0)
+		{
+			metadata->is_constant_dims = (bool) bson_iter_bool(&b_iter);
 		}
 		else
 		{
-			printf("Unknown key '%s' when retrieving metadata for variable %s\n", bson_iter_key(b_iter), metadata->name);
+			printf("Unknown key '%s' when retrieving metadata for variable %s\n", bson_iter_key(&b_iter), metadata->name);
 		}
 	}
 
@@ -768,6 +783,13 @@ int j_adios_get_var_data(char* name_space, char* variable_name, unsigned int len
 
 	data_object = j_object_new(string_data_object, variable_name);
 	j_object_read(data_object, data_pointer, length, 0, &bytes_read, batch);
+
+	if(use_batch)
+	{
+		j_batch_execute(batch); //DESIGN: where should this be? how often?
+		printf("Julea Adios Client: Batch execute \n");
+	}
+
 	if(bytes_read == length)
 	{
 		printf("Julea Adios Client: Read data for variable '%s' \n", variable_name);
@@ -777,11 +799,6 @@ int j_adios_get_var_data(char* name_space, char* variable_name, unsigned int len
 		printf("WARNING: only %ld bytes read instead of %d bytes! \n",bytes_read, length);
 	}
 
-	if(use_batch)
-	{
-		j_batch_execute(batch); //DESIGN: where should this be? how often?
-		printf("Julea Adios Client: Batch execute \n");
-	}
 	print_float_data(data_pointer);
 	free(string_data_object);
 	return 0;
