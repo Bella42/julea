@@ -76,15 +76,94 @@ var_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	* http://mongoc.org/libbson/current/bson_t.html
 	* bson_append_utf8 (b, key, (int) strlen (key), (val))
 	* key_length: The length of key in bytes, or -1 to determine the length with strlen(). */
-	assert(bson_append_int64(bson_meta_data, "shape", -1, *metadata->shape));
-	assert(bson_append_int64(bson_meta_data, "start", -1, *metadata->start));
-	assert(bson_append_int64(bson_meta_data, "count", -1, *metadata->count));
+	gchar* key;
+
+	if(metadata->shape_size > 0)
+	{
+		for(int i = 0; i < metadata->shape_size; i++)
+		{
+			//FIXME: not finished
+			key = g_strdup_printf("shape_%d",i);
+
+			assert(bson_append_int64(bson_meta_data, key, -1, metadata->shape[i]));
+		}
+	}
+	//else if()
+	// {
+		//FIXME: something needed?
+	// }
+	if(metadata->start_size > 0)
+	{
+		for(guint i = 0; i < metadata->start_size; i++)
+		{
+			//FIXME: not finished
+			key = g_strdup_printf("start_%d",i);
+
+			assert(bson_append_int64(bson_meta_data, key, -1, metadata->start[i]));
+		}
+	}
+	if(metadata->count_size > 0)
+	{
+		for(guint i = 0; i < metadata->count_size; i++)
+		{
+			//FIXME: not finished
+			key = g_strdup_printf("count_%d",i);
+
+			assert(bson_append_int64(bson_meta_data, key, -1, metadata->count[i]));
+		}
+	}
+	if(metadata->memory_start_size > 0)
+	{
+		for(guint i = 0; i < metadata->memory_start_size; i++)
+		{
+			//FIXME: not finished
+			key = g_strdup_printf("memory_start_%d",i);
+
+			assert(bson_append_int64(bson_meta_data, key, -1, metadata->memory_start[i]));
+		}
+	}
+	if(metadata->memory_count_size > 0)
+	{
+		for(guint i = 0; i < metadata->memory_count_size; i++)
+		{
+			//FIXME: not finished
+			key = g_strdup_printf("memory_count_%d",i);
+
+			assert(bson_append_int64(bson_meta_data, key, -1, metadata->memory_count[i]));
+		}
+	}
+	// assert(bson_append_int64(bson_meta_data, "shape", -1, *metadata->shape)); //FIXME
+	// assert(bson_append_int64(bson_meta_data, "start", -1, *metadata->start)); //FIXME
+	// assert(bson_append_int64(bson_meta_data, "count", -1, *metadata->count)); //FIXME
+	// assert(bson_append_int64(bson_meta_data, "memory_start", -1, *metadata->start)); //FIXME
+	// assert(bson_append_int64(bson_meta_data, "memory_count", -1, *metadata->count)); //FIXME
+
+	assert(bson_append_int64(bson_meta_data, "shape_size", -1, metadata->shape_size));
+	assert(bson_append_int64(bson_meta_data, "start_size", -1, metadata->start_size));
+	assert(bson_append_int64(bson_meta_data, "count_size", -1, metadata->count_size));
+	assert(bson_append_int64(bson_meta_data, "memory_start_size", -1, metadata->memory_start_size));
+	assert(bson_append_int64(bson_meta_data, "memory_count_size", -1, metadata->memory_count_size));
+
 	assert(bson_append_int64(bson_meta_data, "steps_start", -1, metadata->steps_start));
 	assert(bson_append_int64(bson_meta_data, "steps_count", -1, metadata->steps_count));
-	assert(bson_append_bool(bson_meta_data, "is_constant_dims", -1, metadata->is_constant_dims));
-	assert(bson_append_bool(bson_meta_data, "is_value", -1, metadata->is_value));
-	assert(bson_append_int64(bson_meta_data, "data_size", -1, metadata->data_size));
+	assert(bson_append_int64(bson_meta_data, "block_id", -1, metadata->block_id));
+	assert(bson_append_int64(bson_meta_data, "index_start", -1, metadata->index_start));
+	assert(bson_append_int64(bson_meta_data, "element_size", -1, metadata->element_size));
+	assert(bson_append_int64(bson_meta_data, "available_steps_start", -1, metadata->available_steps_start));
+	assert(bson_append_int64(bson_meta_data, "available_steps_count", -1, metadata->available_steps_count));
+
 	assert(bson_append_int64(bson_meta_data, "var_type", -1, metadata->var_type));
+
+	assert(bson_append_int64(bson_meta_data, "data_size", -1, metadata->data_size));
+
+	assert(bson_append_bool(bson_meta_data, "is_value", -1, metadata->is_value));
+	assert(bson_append_bool(bson_meta_data, "is_single_value", -1, metadata->is_single_value));
+	assert(bson_append_bool(bson_meta_data, "is_single_value", -1, metadata->is_single_value));
+	assert(bson_append_bool(bson_meta_data, "is_constant_dims", -1, metadata->is_constant_dims));
+	assert(bson_append_bool(bson_meta_data, "is_read_as_joined", -1, metadata->is_read_as_joined));
+	assert(bson_append_bool(bson_meta_data, "is_read_as_local_value", -1, metadata->is_read_as_local_value));
+	assert(bson_append_bool(bson_meta_data, "is_random_access", -1, metadata->is_random_access));
+	assert(bson_append_bool(bson_meta_data, "is_first_streaming_step", -1, metadata->is_first_streaming_step));
 
 	/* now comes the part for "min_value" of type T in C++ */
 	if(metadata->var_type == COMPOUND)
@@ -502,6 +581,20 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 	/* probably not very efficient */
 	while(bson_iter_next(&b_iter))
 	{
+		if(g_strcmp0(bson_iter_key(&b_iter),"shape_size") == 0)
+		{
+			metadata->shape_size = bson_iter_int64(&b_iter);
+			if(metadata->shape_size > 0)
+			{
+
+				if(g_strcmp0(bson_iter_key(&b_iter),"shape") == 0)
+				{
+				//FIXME: for
+				*metadata->shape = bson_iter_int64(&b_iter);
+				}
+
+			}
+		}
 		if(g_strcmp0(bson_iter_key(&b_iter),"shape") == 0)
 		{
 			//FIXME: for
