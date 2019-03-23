@@ -73,9 +73,9 @@ void
 var_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 {
 	gchar* key;
-	printf("JADIOS: bson: metadata->shape %ld\n", metadata->shape_size);
-	printf("JADIOS: bson: metadata->start %ld\n", metadata->start_size);
-	printf("JADIOS: bson: metadata->count %ld\n", metadata->count_size);
+	printf("-- JADIOS DEBUG PRINT: bson: metadata->shape %ld\n", metadata->shape_size);
+	printf("-- JADIOS DEBUG PRINT: bson: metadata->start %ld\n", metadata->start_size);
+	printf("-- JADIOS DEBUG PRINT: bson: metadata->count %ld\n", metadata->count_size);
 
 	assert(bson_append_int64(bson_meta_data, "shape_size", -1, metadata->shape_size));
 	for(guint i = 0; i < metadata->shape_size; i++)
@@ -241,7 +241,7 @@ attr_metadata_to_bson(AttributeMetadata* attr_metadata, bson_t* bson_meta_data)
 
 int j_adios_init(JuleaInfo* julea_info)
 {
-	printf("Julea Adios Client: Init\n");
+	printf("---* Julea Adios Client: Init\n");
 
 	//TODO:create scheme for db
 	// julea_info->semantics = j_semantics_new (J_SEMANTICS_TEMPLATE_POSIX);
@@ -322,7 +322,7 @@ int j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointe
 	}
 	else
 	{
-		printf("Julea Adios Client: Variable %s already in kv store. \n", metadata->name);
+		printf("---* Julea Adios Client: Variable %s already in kv store. \n", metadata->name);
 	}
 
 	// json = bson_as_canonical_extended_json(bson_names, NULL);
@@ -337,12 +337,12 @@ int j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointe
 	if(use_batch)
 	{
 		j_batch_execute(batch); //DESIGN: where should this be? how often?
-		printf("Julea Adios Client: Batch execute \n");
+		printf("---* Julea Adios Client: Batch execute \n");
 	}
 
 	if(bytes_written == metadata->data_size)
 	{
-		printf("Julea Adios Client: Data written for variable '%s' \n", metadata->name);
+		printf("---* Julea Adios Client: Data written for variable '%s' \n", metadata->name);
 	}
 	else
 	{
@@ -353,7 +353,7 @@ int j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointe
 	//g_free(string_names_kv);
 	g_free(string_data_object);
 
-	printf("Julea Adios Client: Put Variable \n");
+	printf("---* Julea Adios Client: Put Variable \n");
 	return 0;
 }
 
@@ -391,13 +391,13 @@ int j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, vo
 	string_data_object = g_strdup_printf("%s_attributes_%s", name_space, attr_metadata->name);
 	data_object = j_object_new(string_data_object, attr_metadata->name);
 	j_object_create(data_object, batch);
-	// printf("Julea Adios Client: Object create \n");
+	// printf("---* Julea Adios Client: Object create \n");
 
 	j_object_write(data_object, data_pointer, attr_metadata->data_size, 0, &bytes_written, batch);
 
 	if(bytes_written == attr_metadata->data_size)
 	{
-		printf("Julea Adios Client: Data written for attribute '%s' \n", attr_metadata->name);
+		printf("---* Julea Adios Client: Data written for attribute '%s' \n", attr_metadata->name);
 	}
 	else
 	{
@@ -426,7 +426,7 @@ int j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, vo
 	}
 	else
 	{
-		printf("Julea Adios Client: Attribute %s already in kv store. \n", attr_metadata->name);
+		printf("---* Julea Adios Client: Attribute %s already in kv store. \n", attr_metadata->name);
 	}
 
 	attr_metadata_to_bson(attr_metadata, bson_meta_data);
@@ -438,14 +438,14 @@ int j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, vo
 	if(use_batch)
 	{
 		j_batch_execute(batch); //DESIGN: where should this be? how often?
-		printf("Julea Adios Client: Batch execute \n");
+		printf("---* Julea Adios Client: Batch execute \n");
 	}
 
 	g_free(string_metadata_kv);
 	// g_free(string_names_kv);
 	g_free(string_data_object);
 
-	printf("Julea Adios Client: Put Attribute \n");
+	printf("---* Julea Adios Client: Put Attribute \n");
 	return 0;
 }
 
@@ -496,8 +496,8 @@ int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** typ
 		}
 		(*names)[i] = g_strdup(bson_iter_key(&b_iter));
 		(*types)[i] = bson_iter_int32(&b_iter);
-		printf("JULEA: get_all_var_names_from_kv DEBUG PRINT: %s\n", (*names)[i]);
-		printf("JULEA: types DEBUG PRINT: %d\n", (*types)[i]);
+		printf("-- JADIOS DEBUG PRINT: get_all_var_names_from_kv DEBUG PRINT: %s\n", (*names)[i]);
+		printf("-- JADIOS DEBUG PRINT: types DEBUG PRINT: %d\n", (*types)[i]);
 	}
 
 	//g_free(string_names_kv);
@@ -545,7 +545,7 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 		if(g_strcmp0(bson_iter_key(&b_iter),"shape_size") == 0)
 		{
 			metadata->shape_size = bson_iter_int64(&b_iter);
-			printf("JADIOS: shape_size = %ld \n", metadata->shape_size);
+			printf("-- JADIOS DEBUG PRINT: shape_size = %ld \n", metadata->shape_size);
 
 			bson_iter_next(&b_iter);
 			if(metadata->shape_size > 0)
@@ -564,7 +564,7 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 		else if(g_strcmp0(bson_iter_key(&b_iter),"start_size") == 0)
 		{
 			metadata->start_size = bson_iter_int64(&b_iter);
-			printf("JADIOS: start_size = %ld \n", metadata->start_size);
+			printf("-- JADIOS DEBUG PRINT: start_size = %ld \n", metadata->start_size);
 
 			bson_iter_next(&b_iter);
 			if(metadata->start_size > 0)
@@ -583,7 +583,7 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 		else if(g_strcmp0(bson_iter_key(&b_iter),"count_size") == 0)
 		{
 			metadata->count_size = bson_iter_int64(&b_iter);
-			printf("JADIOS: count_size = %ld \n", metadata->count_size);
+			printf("-- JADIOS DEBUG PRINT: count_size = %ld \n", metadata->count_size);
 
 			bson_iter_next(&b_iter);
 			if(metadata->count_size > 0)
@@ -594,7 +594,7 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
 					{
 						metadata->count[i] = bson_iter_int64(&b_iter);
-						printf("JADIOS: count[%d] = %ld \n",i, metadata->count[i]);
+						printf("-- JADIOS DEBUG PRINT: count[%d] = %ld \n",i, metadata->count[i]);
 					}
 					bson_iter_next(&b_iter);
 				}
@@ -784,7 +784,7 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 
 	g_free(string_metadata_kv);
 	g_free(key);
-	printf("Julea Adios Client: Get Variable Metadata \n");
+	printf("---* Julea Adios Client: Get Variable Metadata \n");
 	return 0;
 }
 
@@ -868,7 +868,7 @@ int j_adios_get_attr_metadata_from_kv(char* name_space, char* attr_name, Attribu
 	}
 
 	g_free(string_metadata_kv);
-	printf("Julea Adios Client: Get Attribute Metadata \n");
+	printf("---* Julea Adios Client: Get Attribute Metadata \n");
 	return 0;
 }
 
@@ -893,8 +893,8 @@ int j_adios_get_all_var_names(char* name_space, char*** names, JSemantics* seman
 
 	// j_smd_get_all_var_names(smd_object, names batch);
 	//TODO: j_smd_get_all_var_names(name_space,names);
-	printf("Namespace %s variable name %s \n",name_space, &names[0][0][0] );
-	// printf("Julea Adios Client: get_all_var_names (from smd) is not yet supported \n");
+	printf("-- JADIOS DEBUG PRINT: Namespace %s variable name %s \n",name_space, &names[0][0][0] );
+	// printf("---* Julea Adios Client: get_all_var_names (from smd) is not yet supported \n");
 
 	j_batch_execute(batch);
 	g_free(smd_name);
@@ -921,9 +921,9 @@ int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* seman
 	// smd_object = j_smd_new("adios_metadata", metadata_kv);
 	//TODO: j_smd_get_metadata(name_space, metadata);
 
-	printf("Namespace %s, variable \n", metadata->name);
-	printf("Julea Adios Client: Get Metadata from SMD \n");
-	// printf("Julea Adios Client: get_metadata (from smd) is not yet supported \n");
+	printf("-- JADIOS DEBUG PRINT: Namespace %s, variable \n", metadata->name);
+	printf("---* Julea Adios Client: Get Metadata from SMD \n");
+	// printf("---* Julea Adios Client: get_metadata (from smd) is not yet supported \n");
 	j_batch_execute(batch);
 	g_free(smd_name);
 	return 0;
@@ -946,7 +946,7 @@ int j_adios_get_var_data(char* name_space, char* variable_name, unsigned int len
 	guint64 bytes_read = 0; //nb = bytes written; see benchmark
 	g_autoptr(JObject) data_object = NULL;
 
-	printf("JADIOS DEBUG PRINT:  get var data: length: %d\n", length);
+	printf("-- JADIOS DEBUG PRINT:  get var data: length: %d\n", length);
 	length = 40;
 
 	string_data_object = g_strdup_printf("%s_variables_%s", name_space,variable_name);
@@ -957,12 +957,12 @@ int j_adios_get_var_data(char* name_space, char* variable_name, unsigned int len
 	if(use_batch)
 	{
 		j_batch_execute(batch); //DESIGN: where should this be? how often?
-		printf("Julea Adios Client: Batch execute \n");
+		printf("---* Julea Adios Client: Batch execute \n");
 	}
 
 	if(bytes_read == length)
 	{
-		printf("Julea Adios Client: Read data for variable '%s' \n", variable_name);
+		printf("---* Julea Adios Client: Read data for variable '%s' \n", variable_name);
 	}
 	else
 	{
@@ -996,7 +996,7 @@ int j_adios_get_attr_data(char* name_space, char* attribute_name, unsigned int l
 	j_object_read(data_object, data_pointer, length, 0, &bytes_read, batch);
 	if(bytes_read == length)
 	{
-		printf("Julea Adios Client: Read data for variable '%s' \n", attribute_name);
+		printf("---* Julea Adios Client: Read data for variable '%s' \n", attribute_name);
 	}
 	else
 	{
@@ -1006,7 +1006,7 @@ int j_adios_get_attr_data(char* name_space, char* attribute_name, unsigned int l
 	if(use_batch)
 	{
 		j_batch_execute(batch); //DESIGN: where should this be? how often?
-		printf("Julea Adios Client: Batch execute \n");
+		printf("---* Julea Adios Client: Batch execute \n");
 	}
 
 	free(string_data_object);
@@ -1049,7 +1049,7 @@ int j_adios_delete_variable(char* name_space, char* var_name, JBatch* batch)
 	// g_free(string_names_kv);
 	g_free(string_data_object);
 
-	printf("Julea Adios Client: Delete variable %s \n", var_name);
+	printf("---* Julea Adios Client: Delete variable %s \n", var_name);
 	return 0;
 }
 
@@ -1089,6 +1089,6 @@ int j_adios_delete_attribute(char* name_space, char* var_name, JBatch* batch)
 	// g_free(string_names_kv);
 	g_free(string_data_object);
 
-	printf("Julea Adios Client: Delete attribute %s \n", var_name);
+	printf("---* Julea Adios Client: Delete attribute %s \n", var_name);
 	return 0;
 }
