@@ -72,77 +72,41 @@ int print_float_data(void* data_pointer)
 void
 var_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 {
-	/* short BSON HOW TO ---------
-	* http://mongoc.org/libbson/current/bson_t.html
-	* bson_append_utf8 (b, key, (int) strlen (key), (val))
-	* key_length: The length of key in bytes, or -1 to determine the length with strlen(). */
 	gchar* key;
-
-	if(metadata->shape_size > 0)
-	{
-		for(int i = 0; i < metadata->shape_size; i++)
-		{
-			//FIXME: not finished
-			key = g_strdup_printf("shape_%d",i);
-
-			assert(bson_append_int64(bson_meta_data, key, -1, metadata->shape[i]));
-		}
-	}
-	//else if()
-	// {
-		//FIXME: something needed?
-	// }
-	if(metadata->start_size > 0)
-	{
-		for(guint i = 0; i < metadata->start_size; i++)
-		{
-			//FIXME: not finished
-			key = g_strdup_printf("start_%d",i);
-
-			assert(bson_append_int64(bson_meta_data, key, -1, metadata->start[i]));
-		}
-	}
-	if(metadata->count_size > 0)
-	{
-		for(guint i = 0; i < metadata->count_size; i++)
-		{
-			//FIXME: not finished
-			key = g_strdup_printf("count_%d",i);
-
-			assert(bson_append_int64(bson_meta_data, key, -1, metadata->count[i]));
-		}
-	}
-	if(metadata->memory_start_size > 0)
-	{
-		for(guint i = 0; i < metadata->memory_start_size; i++)
-		{
-			//FIXME: not finished
-			key = g_strdup_printf("memory_start_%d",i);
-
-			assert(bson_append_int64(bson_meta_data, key, -1, metadata->memory_start[i]));
-		}
-	}
-	if(metadata->memory_count_size > 0)
-	{
-		for(guint i = 0; i < metadata->memory_count_size; i++)
-		{
-			//FIXME: not finished
-			key = g_strdup_printf("memory_count_%d",i);
-
-			assert(bson_append_int64(bson_meta_data, key, -1, metadata->memory_count[i]));
-		}
-	}
-	// assert(bson_append_int64(bson_meta_data, "shape", -1, *metadata->shape)); //FIXME
-	// assert(bson_append_int64(bson_meta_data, "start", -1, *metadata->start)); //FIXME
-	// assert(bson_append_int64(bson_meta_data, "count", -1, *metadata->count)); //FIXME
-	// assert(bson_append_int64(bson_meta_data, "memory_start", -1, *metadata->start)); //FIXME
-	// assert(bson_append_int64(bson_meta_data, "memory_count", -1, *metadata->count)); //FIXME
-
 	assert(bson_append_int64(bson_meta_data, "shape_size", -1, metadata->shape_size));
+	for(guint i = 0; i < metadata->shape_size; i++)
+	{
+		key = g_strdup_printf("shape_%d",i);
+		assert(bson_append_int64(bson_meta_data, key, -1, metadata->shape[i]));
+	}
+
 	assert(bson_append_int64(bson_meta_data, "start_size", -1, metadata->start_size));
+	for(guint i = 0; i < metadata->start_size; i++)
+	{
+		key = g_strdup_printf("start_%d",i);
+		assert(bson_append_int64(bson_meta_data, key, -1, metadata->start[i]));
+	}
+
 	assert(bson_append_int64(bson_meta_data, "count_size", -1, metadata->count_size));
+	for(guint i = 0; i < metadata->count_size; i++)
+	{
+		key = g_strdup_printf("count_%d",i);
+		assert(bson_append_int64(bson_meta_data, key, -1, metadata->count[i]));
+	}
+
 	assert(bson_append_int64(bson_meta_data, "memory_start_size", -1, metadata->memory_start_size));
+	for(guint i = 0; i < metadata->memory_start_size; i++)
+	{
+		key = g_strdup_printf("memory_start_%d",i);
+		assert(bson_append_int64(bson_meta_data, key, -1, metadata->memory_start[i]));
+	}
+
 	assert(bson_append_int64(bson_meta_data, "memory_count_size", -1, metadata->memory_count_size));
+	for(guint i = 0; i < metadata->memory_count_size; i++)
+	{
+		key = g_strdup_printf("memory_count_%d",i);
+		assert(bson_append_int64(bson_meta_data, key, -1, metadata->memory_count[i]));
+	}
 
 	assert(bson_append_int64(bson_meta_data, "steps_start", -1, metadata->steps_start));
 	assert(bson_append_int64(bson_meta_data, "steps_count", -1, metadata->steps_count));
@@ -503,12 +467,10 @@ int j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, vo
  */
 int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, unsigned int* count_names, JSemantics* semantics)
 {
-	printf("JULEA: get_all_var_names_from_kv DEBUG PRINT 0\n");
 	//gchar* string_names_kv;
+	gchar* json;
 	bson_t* bson_names;
 	bson_iter_t b_iter;
-
-	char* json;
 
 	g_autoptr(JKV) kv_object = NULL;
 
@@ -520,8 +482,10 @@ int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** typ
 
 	j_kv_get(kv_object, bson_names, batch);
 	j_batch_execute(batch);
+
 	json = bson_as_canonical_extended_json(bson_names, NULL);
 	g_print("bson_names after get %s \n",json);
+
 	*count_names = bson_count_keys(bson_names);
 
 	*names = g_slice_alloc(*count_names * sizeof(char*));
@@ -531,10 +495,9 @@ int j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** typ
 	printf("JULEA: get_all_var_names_from_kv DEBUG PRINT 1\n");
 	printf("JULEA: count_names %d \n", *count_names);
 
-
 	for(unsigned int i = 0; i < *count_names; i++)
 	{
-	printf("JULEA: get_all_var_names_from_kv DEBUG PRINT 2\n");
+		printf("JULEA: get_all_var_names_from_kv DEBUG PRINT 2\n");
 		if(!bson_iter_next(&b_iter))
 		{
 			printf("ERROR: count of names does not match \n");
@@ -562,6 +525,7 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 {
 	JBatch* batch;
 	gchar* string_metadata_kv;
+	gchar* key;
 	bson_t* bson_metadata;
 	bson_iter_t b_iter;
 
@@ -581,33 +545,97 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 	/* probably not very efficient */
 	while(bson_iter_next(&b_iter))
 	{
+		// if(g_strcmp0(bson_iter_key(&b_iter),"shape") == 0)
+		// {
+		// 	//FIXME: for
+		// 	*metadata->shape = bson_iter_int64(&b_iter);
+		// }
 		if(g_strcmp0(bson_iter_key(&b_iter),"shape_size") == 0)
 		{
 			metadata->shape_size = bson_iter_int64(&b_iter);
+
 			if(metadata->shape_size > 0)
 			{
-
-				if(g_strcmp0(bson_iter_key(&b_iter),"shape") == 0)
+				for(guint i = 0; i < metadata->shape_size; i++)
 				{
-				//FIXME: for
-				*metadata->shape = bson_iter_int64(&b_iter);
+					key = g_strdup_printf("shape_%d",i);
+					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
+					{
+						metadata->shape[i] = bson_iter_int64(&b_iter);
+					}
+					bson_iter_next(&b_iter);
 				}
-
 			}
 		}
-		if(g_strcmp0(bson_iter_key(&b_iter),"shape") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"start_size") == 0)
 		{
-			//FIXME: for
-			*metadata->shape = bson_iter_int64(&b_iter);
+			metadata->start_size = bson_iter_int64(&b_iter);
+
+			if(metadata->start_size > 0)
+			{
+				for(guint i = 0; i < metadata->start_size; i++)
+				{
+					key = g_strdup_printf("start_%d",i);
+					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
+					{
+						metadata->start[i] = bson_iter_int64(&b_iter);
+					}
+					bson_iter_next(&b_iter);
+				}
+			}
 		}
-		else if(g_strcmp0(bson_iter_key(&b_iter),"start") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"count_size") == 0)
 		{
-			*metadata->start = bson_iter_int64(&b_iter);
+			metadata->count_size = bson_iter_int64(&b_iter);
+
+			if(metadata->count_size > 0)
+			{
+				for(guint i = 0; i < metadata->count_size; i++)
+				{
+					key = g_strdup_printf("count_%d",i);
+					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
+					{
+						metadata->count[i] = bson_iter_int64(&b_iter);
+					}
+					bson_iter_next(&b_iter);
+				}
+			}
 		}
-		else if(g_strcmp0(bson_iter_key(&b_iter),"count") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"memory_start_size") == 0)
 		{
-			*metadata->count = bson_iter_int64(&b_iter);
+			metadata->memory_start_size = bson_iter_int64(&b_iter);
+
+			if(metadata->memory_start_size > 0)
+			{
+				for(guint i = 0; i < metadata->memory_start_size; i++)
+				{
+					key = g_strdup_printf("memory_start_%d",i);
+					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
+					{
+						metadata->memory_start[i] = bson_iter_int64(&b_iter);
+					}
+					bson_iter_next(&b_iter);
+				}
+			}
 		}
+		else if(g_strcmp0(bson_iter_key(&b_iter),"memory_count_size") == 0)
+		{
+			metadata->memory_count_size = bson_iter_int64(&b_iter);
+
+			if(metadata->memory_count_size > 0)
+			{
+				for(guint i = 0; i < metadata->memory_count_size; i++)
+				{
+					key = g_strdup_printf("memory_count_%d",i);
+					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
+					{
+						metadata->memory_count[i] = bson_iter_int64(&b_iter);
+					}
+					bson_iter_next(&b_iter);
+				}
+			}
+		}
+		/* unsigned long */
 		else if(g_strcmp0(bson_iter_key(&b_iter),"steps_start") == 0)
 		{
 			metadata->steps_start = bson_iter_int64(&b_iter);
@@ -616,18 +644,66 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 		{
 			metadata->steps_count = bson_iter_int64(&b_iter);
 		}
-		else if(g_strcmp0(bson_iter_key(&b_iter),"is_value") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"block_id") == 0)
 		{
-			metadata->is_value = (bool) bson_iter_bool(&b_iter);
+			metadata->block_id = bson_iter_int64(&b_iter);
 		}
-		else if(g_strcmp0(bson_iter_key(&b_iter),"data_size") == 0)
+		else if(g_strcmp0(bson_iter_key(&b_iter),"index_start") == 0)
 		{
-			metadata->data_size = bson_iter_int64(&b_iter);
+			metadata->index_start = bson_iter_int64(&b_iter);
 		}
+		else if(g_strcmp0(bson_iter_key(&b_iter),"element_size") == 0)
+		{
+			metadata->element_size = bson_iter_int64(&b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(&b_iter),"available_steps_start") == 0)
+		{
+			metadata->available_steps_start = bson_iter_int64(&b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(&b_iter),"available_steps_count") == 0)
+		{
+			metadata->available_steps_count = bson_iter_int64(&b_iter);
+		}
+		/* variable_type */
 		else if(g_strcmp0(bson_iter_key(&b_iter),"var_type") == 0)
 		{
 			metadata->var_type = (int) bson_iter_int64(&b_iter);
 		}
+		/* unsigned int */
+		else if(g_strcmp0(bson_iter_key(&b_iter),"data_size") == 0)
+		{
+			metadata->data_size = bson_iter_int64(&b_iter);
+		}
+		/* boolean */
+		else if(g_strcmp0(bson_iter_key(&b_iter),"is_value") == 0)
+		{
+			metadata->is_value = (bool) bson_iter_bool(&b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(&b_iter),"is_single_value") == 0)
+		{
+			metadata->is_single_value = (bool) bson_iter_bool(&b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(&b_iter),"is_constant_dims") == 0)
+		{
+			metadata->is_constant_dims = (bool) bson_iter_bool(&b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(&b_iter),"is_read_as_joined") == 0)
+		{
+			metadata->is_read_as_joined = (bool) bson_iter_bool(&b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(&b_iter),"is_read_as_local_value") == 0)
+		{
+			metadata->is_read_as_local_value = (bool) bson_iter_bool(&b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(&b_iter),"is_random_access") == 0)
+		{
+			metadata->is_random_access = (bool) bson_iter_bool(&b_iter);
+		}
+		else if(g_strcmp0(bson_iter_key(&b_iter),"is_first_streaming_step") == 0)
+		{
+			metadata->is_first_streaming_step = (bool) bson_iter_bool(&b_iter);
+		}
+		/* value_type*/
 		else if(g_strcmp0(bson_iter_key(&b_iter),"min_value") == 0)
 		{
 			if(metadata->var_type == CHAR)
