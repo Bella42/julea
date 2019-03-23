@@ -546,6 +546,7 @@ j_configuration_get_smd_path (JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->smd.path;
+}
 
 guint64
 j_configuration_get_max_operation_size (JConfiguration* configuration)

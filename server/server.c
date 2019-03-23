@@ -866,9 +866,9 @@ main (int argc, char** argv)
 	kv_component = j_configuration_get_kv_component(jd_configuration);
 	kv_path = j_configuration_get_kv_path(jd_configuration);
 
-	smd_backend = j_configuration_get_smd_backend(configuration);
-	smd_component = j_configuration_get_smd_component(configuration);
-	smd_path = j_configuration_get_smd_path(configuration);
+	smd_backend = j_configuration_get_smd_backend(jd_configuration);
+	smd_component = j_configuration_get_smd_component(jd_configuration);
+	smd_path = j_configuration_get_smd_path(jd_configuration);
 
 #ifdef JULEA_DEBUG
 	object_path_port = g_strdup_printf("%s/%d", object_path, opt_port);
