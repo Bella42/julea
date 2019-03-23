@@ -186,8 +186,8 @@ int j_adios_get_all_attr_names_from_kv(char* name_space, char*** names, int** ty
 int j_adios_get_attr_metadata_from_kv(char* name_space, char* var_name, AttributeMetadata* attr_metadata, JSemantics* semantics);
 
 /* get metadata from SMD backend*/
-int j_adios_get_all_var_names(char* name_space, char*** names, JSemantics* semantics);
-int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* semantics);
+int j_adios_get_all_var_names_from_smd(char* name_space, char*** names, JSemantics* semantics);
+int j_adios_get_metadata_from_smd(char* name_space, Metadata* metadata, JSemantics* semantics);
 
 int j_adios_delete_variable(char* name_space, char* var_name, JBatch* batch);
 int j_adios_delete_attribute(char* name_space, char* attr_name, JBatch* batch);

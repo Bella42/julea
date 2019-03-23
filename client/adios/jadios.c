@@ -881,7 +881,7 @@ int j_adios_get_attr_metadata_from_kv(char* name_space, char* attr_name, Attribu
  * @param [r] semantics  semantics to be used
  * @return            	 returns 0 on success
  */
-int j_adios_get_all_var_names(char* name_space, char*** names, JSemantics* semantics)
+int j_adios_get_all_var_names_from_smd(char* name_space, char*** names, JSemantics* semantics)
 {
 	JBatch* batch;
 	gchar* smd_name;
@@ -910,7 +910,7 @@ int j_adios_get_all_var_names(char* name_space, char*** names, JSemantics* seman
  * @param [r] semantics  semantics to be used
  * @return            	 returns 0 on success
  */
-int j_adios_get_metadata(char* name_space, Metadata* metadata, JSemantics* semantics)
+int j_adios_get_metadata_from_smd(char* name_space, Metadata* metadata, JSemantics* semantics)
 {
 	JBatch* batch;
 	gchar* smd_name;
