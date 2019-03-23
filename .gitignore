@@ -1,11 +1,14 @@
 # Dependencies
 dependencies/
 
+# Example
+example/hello-world
+
 # Doxygen
 html/
 
 # Sublime Text
-*.sublime-workspace
+*.sublime-*
 
 # Vim
 *.swp

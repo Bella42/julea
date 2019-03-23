@@ -119,6 +119,7 @@ struct JConfiguration
 	}
 	kv;
 
+<<<<<<< HEAD:lib/jconfiguration.c
 	/**
 	 * The smd configuration.
 	 */
@@ -141,7 +142,11 @@ struct JConfiguration
 	}
 	smd;
 
+=======
+	guint64 max_operation_size;
+>>>>>>> 92d440b290edba6ed13ad658749305fe2f00d9a9:lib/core/jconfiguration.c
 	guint32 max_connections;
+	guint64 stripe_size;
 
 	/**
 	 * The reference count.
@@ -261,14 +266,21 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	gchar* kv_backend;
 	gchar* kv_component;
 	gchar* kv_path;
+<<<<<<< HEAD:lib/jconfiguration.c
 	gchar* smd_backend;
 	gchar* smd_component;
 	gchar* smd_path;
+=======
+	guint64 max_operation_size;
+>>>>>>> 92d440b290edba6ed13ad658749305fe2f00d9a9:lib/core/jconfiguration.c
 	guint32 max_connections;
+	guint64 stripe_size;
 
 	g_return_val_if_fail(key_file != NULL, FALSE);
 
+	max_operation_size = g_key_file_get_uint64(key_file, "core", "max-operation-size", NULL);
 	max_connections = g_key_file_get_integer(key_file, "clients", "max-connections", NULL);
+	stripe_size = g_key_file_get_uint64(key_file, "clients", "stripe-size", NULL);
 	servers_object = g_key_file_get_string_list(key_file, "servers", "object", NULL, NULL);
 	servers_kv = g_key_file_get_string_list(key_file, "servers", "kv", NULL, NULL);
 	servers_smd = g_key_file_get_string_list(key_file, "servers", "smd", NULL, NULL);
@@ -325,11 +337,31 @@ j_configuration_new_for_data (GKeyFile* key_file)
 	configuration->kv.backend = kv_backend;
 	configuration->kv.component = kv_component;
 	configuration->kv.path = kv_path;
+<<<<<<< HEAD:lib/jconfiguration.c
 	configuration->smd.backend = smd_backend;
 	configuration->smd.component = smd_component;
 	configuration->smd.path = smd_path;
+=======
+	configuration->max_operation_size = max_operation_size;
+>>>>>>> 92d440b290edba6ed13ad658749305fe2f00d9a9:lib/core/jconfiguration.c
 	configuration->max_connections = max_connections;
+	configuration->stripe_size = stripe_size;
 	configuration->ref_count = 1;
+
+	if (configuration->max_operation_size == 0)
+	{
+		configuration->max_operation_size = 8 * 1024 * 1024;
+	}
+
+	if (configuration->max_connections == 0)
+	{
+		configuration->max_connections = g_get_num_processors();
+	}
+
+	if (configuration->stripe_size == 0)
+	{
+		configuration->stripe_size = 4 * 1024 * 1024;
+	}
 
 	return configuration;
 }
@@ -494,6 +526,7 @@ j_configuration_get_kv_path (JConfiguration* configuration)
 	return configuration->kv.path;
 }
 
+<<<<<<< HEAD:lib/jconfiguration.c
 gchar const*
 j_configuration_get_smd_backend (JConfiguration* configuration)
 {
@@ -516,6 +549,14 @@ j_configuration_get_smd_path (JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, NULL);
 
 	return configuration->smd.path;
+=======
+guint64
+j_configuration_get_max_operation_size (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->max_operation_size;
+>>>>>>> 92d440b290edba6ed13ad658749305fe2f00d9a9:lib/core/jconfiguration.c
 }
 
 guint32
@@ -524,6 +565,14 @@ j_configuration_get_max_connections (JConfiguration* configuration)
 	g_return_val_if_fail(configuration != NULL, 0);
 
 	return configuration->max_connections;
+}
+
+guint64
+j_configuration_get_stripe_size (JConfiguration* configuration)
+{
+	g_return_val_if_fail(configuration != NULL, 0);
+
+	return configuration->stripe_size;
 }
 
 /**

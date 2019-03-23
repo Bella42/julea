@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_OPERATION_H
-#define JULEA_OPERATION_H
+#ifndef JULEA_BATCH_H
+#define JULEA_BATCH_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,29 +29,36 @@
 
 #include <glib.h>
 
-#include <jlist.h>
-#include <jsemantics.h>
+G_BEGIN_DECLS
+
+struct JBatch;
+
+typedef struct JBatch JBatch;
+
+typedef void (*JOperationCompletedFunc) (JBatch*, gboolean, gpointer);
+
+G_END_DECLS
+
+#include <core/joperation.h>
+#include <core/jsemantics.h>
 
 G_BEGIN_DECLS
 
-typedef gboolean (*JOperationExecFunc) (JList*, JSemantics*);
-typedef void (*JOperationFreeFunc) (gpointer);
+JBatch* j_batch_new (JSemantics*);
+JBatch* j_batch_new_for_template (JSemanticsTemplate);
+JBatch* j_batch_ref (JBatch*);
+void j_batch_unref (JBatch*);
 
-/**
- * An operation.
- **/
-struct JOperation
-{
-	gpointer key;
-	gpointer data;
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBatch, j_batch_unref)
 
-	JOperationExecFunc exec_func;
-	JOperationFreeFunc free_func;
-};
+JSemantics* j_batch_get_semantics (JBatch*);
 
-typedef struct JOperation JOperation;
+void j_batch_add (JBatch*, JOperation*);
 
-JOperation* j_operation_new (void);
+gboolean j_batch_execute (JBatch*);
+
+void j_batch_execute_async (JBatch*, JOperationCompletedFunc, gpointer);
+void j_batch_wait (JBatch*);
 
 G_END_DECLS
 

@@ -37,9 +37,9 @@ typedef struct JCommon JCommon;
 
 G_END_DECLS
 
-#include <jbackend.h>
-#include <jbatch.h>
-#include <jconfiguration.h>
+#include <core/jbackend.h>
+#include <core/jbatch.h>
+#include <core/jconfiguration.h>
 
 G_BEGIN_DECLS
 

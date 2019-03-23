@@ -37,10 +37,15 @@ static gchar const* opt_object_path = NULL;
 static gchar const* opt_kv_backend = NULL;
 static gchar const* opt_kv_component = NULL;
 static gchar const* opt_kv_path = NULL;
+
 static gchar const* opt_smd_backend = NULL;
 static gchar const* opt_smd_component = NULL;
 static gchar const* opt_smd_path = NULL;
+
+static gint64 opt_max_operation_size = 0;
+
 static gint opt_max_connections = 0;
+static gint64 opt_stripe_size = 0;
 
 static
 gchar**
@@ -104,7 +109,9 @@ write_config (gchar* path)
 	servers_smd = string_split(opt_servers_smd);
 
 	key_file = g_key_file_new();
+	g_key_file_set_int64(key_file, "core", "max-operation-size", opt_stripe_size);
 	g_key_file_set_integer(key_file, "clients", "max-connections", opt_max_connections);
+	g_key_file_set_int64(key_file, "clients", "stripe-size", opt_stripe_size);
 	g_key_file_set_string_list(key_file, "servers", "object", (gchar const* const*)servers_object, g_strv_length(servers_object));
 	g_key_file_set_string_list(key_file, "servers", "kv", (gchar const* const*)servers_kv, g_strv_length(servers_kv));
 	g_key_file_set_string_list(key_file, "servers", "smd", (gchar const* const*)servers_smd, g_strv_length(servers_smd));
@@ -159,10 +166,15 @@ main (gint argc, gchar** argv)
 		{ "kv-backend", 0, 0, G_OPTION_ARG_STRING, &opt_kv_backend, "Key-value backend to use", "posix|null|gio|…" },
 		{ "kv-component", 0, 0, G_OPTION_ARG_STRING, &opt_kv_component, "Key-value component to use", "client|server" },
 		{ "kv-path", 0, 0, G_OPTION_ARG_STRING, &opt_kv_path, "Key-value path to use", "/path/to/storage" },
+
 		{ "smd-backend", 0, 0, G_OPTION_ARG_STRING, &opt_smd_backend, "Structured-metadata backend to use", "posix|null|gio|…" },
 		{ "smd-component", 0, 0, G_OPTION_ARG_STRING, &opt_smd_component, "Structured-metadata component to use", "client|server" },
 		{ "smd-path", 0, 0, G_OPTION_ARG_STRING, &opt_smd_path, "Structured-metadata path to use", "/path/to/storage" },
+
+		{ "max-operation-size", 0, 0, G_OPTION_ARG_INT64, &opt_max_operation_size, "Maximum size of an operation", "0" },
+
 		{ "max-connections", 0, 0, G_OPTION_ARG_INT, &opt_max_connections, "Maximum number of connections", "0" },
+		{ "stripe-size", 0, 0, G_OPTION_ARG_INT64, &opt_stripe_size, "Default stripe size", "0" },
 		{ NULL, 0, 0, 0, NULL, NULL, NULL }
 	};
 
@@ -183,8 +195,14 @@ main (gint argc, gchar** argv)
 	if ((opt_user && opt_system)
 	    || (opt_read && (opt_servers_object != NULL || opt_servers_kv != NULL || opt_servers_smd != NULL || opt_object_backend != NULL || opt_object_component != NULL || opt_object_path != NULL || opt_kv_backend != NULL || opt_kv_component != NULL || opt_kv_path != NULL || opt_smd_backend != NULL || opt_smd_component != NULL || opt_smd_path != NULL))
 	    || (opt_read && !opt_user && !opt_system)
+
 	    || (!opt_read && (opt_servers_object == NULL || opt_servers_kv == NULL || opt_servers_smd == NULL || opt_object_backend == NULL || opt_object_component == NULL || opt_object_path == NULL || opt_kv_backend == NULL || opt_kv_component == NULL || opt_kv_path == NULL || opt_smd_backend != NULL || opt_smd_component != NULL || opt_smd_path != NULL))
+
+	    || (!opt_read && (opt_servers_object == NULL || opt_servers_kv == NULL || opt_object_backend == NULL || opt_object_component == NULL || opt_object_path == NULL || opt_kv_backend == NULL || opt_kv_component == NULL || opt_kv_path == NULL))
+	    || opt_max_operation_size < 0
+
 	    || opt_max_connections < 0
+	    || opt_stripe_size < 0
 	)
 	{
 		g_autofree gchar* help = NULL;

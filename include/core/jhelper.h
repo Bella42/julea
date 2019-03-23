@@ -20,24 +20,27 @@
  * \file
  **/
 
-#ifndef JULEA_BATCH_INTERNAL_H
-#define JULEA_BATCH_INTERNAL_H
+#ifndef JULEA_HELPER_H
+#define JULEA_HELPER_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
 #endif
 
 #include <glib.h>
+#include <gio/gio.h>
 
-#include <jbatch.h>
+#include <core/jbackground-operation.h>
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL JBatch* j_batch_new_from_batch (JBatch*);
+void j_helper_set_nodelay (GSocketConnection*, gboolean);
 
-G_GNUC_INTERNAL JList* j_batch_get_operations (JBatch*);
+gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
 
-G_GNUC_INTERNAL gboolean j_batch_execute_internal (JBatch*);
+guint64 j_helper_atomic_add (guint64 volatile*, guint64);
+
+guint32 j_helper_hash (gchar const*);
 
 G_END_DECLS
 
