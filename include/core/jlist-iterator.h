@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_INTERNAL_H
-#define JULEA_INTERNAL_H
+#ifndef JULEA_LIST_ITERATOR_H
+#define JULEA_LIST_ITERATOR_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,13 +29,25 @@
 
 #include <glib.h>
 
-#include <core/jtrace-internal.h>
+G_BEGIN_DECLS
+
+struct JListIterator;
+
+typedef struct JListIterator JListIterator;
+
+G_END_DECLS
+
+#include <core/jlist.h>
 
 G_BEGIN_DECLS
 
-#define J_CRITICAL(format, ...) g_critical("%s:%s: " format, G_STRLOC, G_STRFUNC, __VA_ARGS__);
+JListIterator* j_list_iterator_new (JList*);
+void j_list_iterator_free (JListIterator*);
 
-/* FIXME j_sync() for benchmarks */
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(JListIterator, j_list_iterator_free)
+
+gboolean j_list_iterator_next (JListIterator*);
+gpointer j_list_iterator_get (JListIterator*);
 
 G_END_DECLS
 

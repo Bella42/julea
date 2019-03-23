@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_BATCH_H
-#define JULEA_BATCH_H
+#ifndef JULEA_DISTRIBUTION_DISTRIBUTION_H
+#define JULEA_DISTRIBUTION_DISTRIBUTION_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,37 +29,29 @@
 
 #include <glib.h>
 
-G_BEGIN_DECLS
+#include <bson.h>
 
-struct JBatch;
+#include <jconfiguration.h>
 
-typedef struct JBatch JBatch;
+struct JDistributionVTable
+{
+	gpointer (*distribution_new) (guint, guint64);
+	void (*distribution_free) (gpointer);
 
-typedef void (*JOperationCompletedFunc) (JBatch*, gboolean, gpointer);
+	void (*distribution_set) (gpointer, gchar const*, guint64);
+	void (*distribution_set2) (gpointer, gchar const*, guint64, guint64);
 
-G_END_DECLS
+	void (*distribution_serialize) (gpointer, bson_t*);
+	void (*distribution_deserialize) (gpointer, bson_t const*);
 
-#include <joperation.h>
-#include <jsemantics.h>
+	void (*distribution_reset) (gpointer, guint64, guint64);
+	gboolean (*distribution_distribute) (gpointer, guint*, guint64*, guint64*, guint64*);
+};
 
-G_BEGIN_DECLS
+typedef struct JDistributionVTable JDistributionVTable;
 
-JBatch* j_batch_new (JSemantics*);
-JBatch* j_batch_new_for_template (JSemanticsTemplate);
-JBatch* j_batch_ref (JBatch*);
-void j_batch_unref (JBatch*);
-
-G_DEFINE_AUTOPTR_CLEANUP_FUNC(JBatch, j_batch_unref)
-
-JSemantics* j_batch_get_semantics (JBatch*);
-
-void j_batch_add (JBatch*, JOperation*);
-
-gboolean j_batch_execute (JBatch*);
-
-void j_batch_execute_async (JBatch*, JOperationCompletedFunc, gpointer);
-void j_batch_wait (JBatch*);
-
-G_END_DECLS
+void j_distribution_round_robin_get_vtable (JDistributionVTable*);
+void j_distribution_single_server_get_vtable (JDistributionVTable*);
+void j_distribution_weighted_get_vtable (JDistributionVTable*);
 
 #endif

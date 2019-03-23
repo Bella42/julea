@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_OPERATION_CACHE_INTERNAL_H
-#define JULEA_OPERATION_CACHE_INTERNAL_H
+#ifndef JULEA_OPERATION_H
+#define JULEA_OPERATION_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,16 +29,29 @@
 
 #include <glib.h>
 
-#include <jbatch.h>
+#include <core/jlist.h>
+#include <core/jsemantics.h>
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL void j_operation_cache_init (void);
-G_GNUC_INTERNAL void j_operation_cache_fini (void);
+typedef gboolean (*JOperationExecFunc) (JList*, JSemantics*);
+typedef void (*JOperationFreeFunc) (gpointer);
 
-G_GNUC_INTERNAL gboolean j_operation_cache_flush (void);
+/**
+ * An operation.
+ **/
+struct JOperation
+{
+	gpointer key;
+	gpointer data;
 
-G_GNUC_INTERNAL gboolean j_operation_cache_add (JBatch*);
+	JOperationExecFunc exec_func;
+	JOperationFreeFunc free_func;
+};
+
+typedef struct JOperation JOperation;
+
+JOperation* j_operation_new (void);
 
 G_END_DECLS
 

@@ -50,7 +50,7 @@ typedef struct JListElement JListElement;
 
 G_END_DECLS
 
-#include <jlist.h>
+#include <core/jlist.h>
 
 G_BEGIN_DECLS
 

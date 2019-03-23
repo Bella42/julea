@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_OPERATION_INTERNAL_H
-#define JULEA_OPERATION_INTERNAL_H
+#ifndef JULEA_DISTRIBUTION_INTERNAL_H
+#define JULEA_DISTRIBUTION_INTERNAL_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,11 +29,16 @@
 
 #include <glib.h>
 
-#include <joperation.h>
+#include <bson.h>
+
+#include <core/jconfiguration.h>
+#include <core/jdistribution.h>
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL void j_operation_free (JOperation*);
+G_GNUC_INTERNAL void j_distribution_init (void);
+
+G_GNUC_INTERNAL void j_distribution_deserialize (JDistribution*, bson_t const*);
 
 G_END_DECLS
 

@@ -20,8 +20,8 @@
  * \file
  **/
 
-#ifndef JULEA_DISTRIBUTION_DISTRIBUTION_H
-#define JULEA_DISTRIBUTION_DISTRIBUTION_H
+#ifndef JULEA_BATCH_INTERNAL_H
+#define JULEA_BATCH_INTERNAL_H
 
 #if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
 #error "Only <julea.h> can be included directly."
@@ -29,29 +29,16 @@
 
 #include <glib.h>
 
-#include <bson.h>
+#include <core/jbatch.h>
 
-#include <jconfiguration.h>
+G_BEGIN_DECLS
 
-struct JDistributionVTable
-{
-	gpointer (*distribution_new) (guint);
-	void (*distribution_free) (gpointer);
+G_GNUC_INTERNAL JBatch* j_batch_new_from_batch (JBatch*);
 
-	void (*distribution_set) (gpointer, gchar const*, guint64);
-	void (*distribution_set2) (gpointer, gchar const*, guint64, guint64);
+G_GNUC_INTERNAL JList* j_batch_get_operations (JBatch*);
 
-	void (*distribution_serialize) (gpointer, bson_t*);
-	void (*distribution_deserialize) (gpointer, bson_t const*);
+G_GNUC_INTERNAL gboolean j_batch_execute_internal (JBatch*);
 
-	void (*distribution_reset) (gpointer, guint64, guint64);
-	gboolean (*distribution_distribute) (gpointer, guint*, guint64*, guint64*, guint64*);
-};
-
-typedef struct JDistributionVTable JDistributionVTable;
-
-void j_distribution_round_robin_get_vtable (JDistributionVTable*);
-void j_distribution_single_server_get_vtable (JDistributionVTable*);
-void j_distribution_weighted_get_vtable (JDistributionVTable*);
+G_END_DECLS
 
 #endif

@@ -1,6 +1,6 @@
 /*
  * JULEA - Flexible storage framework
- * Copyright (C) 2010-2019 Michael Kuhn
+ * Copyright (C) 2019 Michael Kuhn
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -16,32 +16,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * \file
- **/
+#include <julea.h>
+#include <julea-object.h>
 
-#ifndef JULEA_HELPER_H
-#define JULEA_HELPER_H
+#include <stdio.h>
 
-#if !defined(JULEA_H) && !defined(JULEA_COMPILATION)
-#error "Only <julea.h> can be included directly."
-#endif
+int
+main (int argc, char** argv)
+{
+	(void)argc;
+	(void)argv;
 
-#include <glib.h>
-#include <gio/gio.h>
+	g_autoptr(JBatch) batch = NULL;
+	g_autoptr(JObject) object = NULL;
 
-#include <jbackground-operation.h>
+	gchar buffer[128];
+	gchar const* hello_world = "Hello World!";
+	guint64 nbytes;
 
-G_BEGIN_DECLS
+	batch = j_batch_new_for_template(J_SEMANTICS_TEMPLATE_DEFAULT);
+	object = j_object_new("hello", "world");
 
-void j_helper_set_nodelay (GSocketConnection*, gboolean);
+	j_object_create(object, batch);
+	j_object_write(object, hello_world, strlen(hello_world), 0, &nbytes, batch);
+	j_object_read(object, buffer, 128, 0, &nbytes, batch);
+	j_batch_execute(batch);
 
-gboolean j_helper_execute_parallel (JBackgroundOperationFunc, gpointer*, guint);
+	printf("Object contains: %s (%lu bytes)\n", buffer, nbytes);
 
-guint64 j_helper_atomic_add (guint64 volatile*, guint64);
-
-guint32 j_helper_hash (gchar const*);
-
-G_END_DECLS
-
-#endif
+	return 0;
+}

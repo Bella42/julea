@@ -26,9 +26,11 @@
 
 #include <bson.h>
 
-#include <julea-internal.h>
 #include <jconfiguration.h>
+#include <jhelper-internal.h>
 #include <jtrace-internal.h>
+
+#include <julea-internal.h>
 
 #include "distribution.h"
 
@@ -43,7 +45,7 @@
 /**
  * A distribution.
  **/
-struct JDistributionRoundRobin
+struct JDistributionWeighted
 {
 	/**
 	 * The server count.
@@ -65,13 +67,14 @@ struct JDistributionRoundRobin
 	 */
 	guint64 block_size;
 
-	guint start_index;
+	guint* weights;
+	guint sum;
 };
 
-typedef struct JDistributionRoundRobin JDistributionRoundRobin;
+typedef struct JDistributionWeighted JDistributionWeighted;
 
 /**
- * Distributes data in a round robin fashion.
+ * Distributes data to a weighted list of servers.
  *
  * \private
  *
@@ -91,12 +94,13 @@ static
 gboolean
 distribution_distribute (gpointer data, guint* index, guint64* new_length, guint64* new_offset, guint64* block_id)
 {
-	JDistributionRoundRobin* distribution = data;
+	JDistributionWeighted* distribution = data;
 
 	gboolean ret = TRUE;
 	guint64 block;
 	guint64 displacement;
 	guint64 round;
+	guint block_offset;
 
 	j_trace_enter(G_STRFUNC, NULL);
 
@@ -107,12 +111,26 @@ distribution_distribute (gpointer data, guint* index, guint64* new_length, guint
 	}
 
 	block = distribution->offset / distribution->block_size;
-	round = block / distribution->server_count;
+	round = block / distribution->sum;
 	displacement = distribution->offset % distribution->block_size;
 
-	*index = (distribution->start_index + block) % distribution->server_count;
+	*index = 0;
+
+	block_offset = block % distribution->sum;
+
+	for (guint i = 0; i < distribution->server_count; i++)
+	{
+		if (block_offset < distribution->weights[i])
+		{
+			*index = i;
+			break;
+		}
+
+		block_offset -= distribution->weights[i];
+	}
+
 	*new_length = MIN(distribution->length, distribution->block_size - displacement);
-	*new_offset = (round * distribution->block_size) + displacement;
+	*new_offset = (((round * distribution->weights[*index]) + block_offset) * distribution->block_size) + displacement;
 	*block_id = block;
 
 	distribution->length -= *new_length;
@@ -126,19 +144,25 @@ end:
 
 static
 gpointer
-distribution_new (guint server_count)
+distribution_new (guint server_count, guint64 stripe_size)
 {
-	JDistributionRoundRobin* distribution;
+	JDistributionWeighted* distribution;
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	distribution = g_slice_new(JDistributionRoundRobin);
+	distribution = g_slice_new(JDistributionWeighted);
 	distribution->server_count = server_count;
 	distribution->length = 0;
 	distribution->offset = 0;
-	distribution->block_size = J_STRIPE_SIZE;
+	distribution->block_size = stripe_size;
 
-	distribution->start_index = g_random_int_range(0, distribution->server_count);
+	distribution->sum = 0;
+	distribution->weights = g_new(guint, distribution->server_count);
+
+	for (guint i = 0; i < distribution->server_count; i++)
+	{
+		distribution->weights[i] = 0;
+	}
 
 	j_trace_leave(G_STRFUNC);
 
@@ -160,13 +184,15 @@ static
 void
 distribution_free (gpointer data)
 {
-	JDistributionRoundRobin* distribution = data;
+	JDistributionWeighted* distribution = data;
 
 	g_return_if_fail(distribution != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
-	g_slice_free(JDistributionRoundRobin, distribution);
+	g_free(distribution->weights);
+
+	g_slice_free(JDistributionWeighted, distribution);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -186,7 +212,7 @@ static
 void
 distribution_set (gpointer data, gchar const* key, guint64 value)
 {
-	JDistributionRoundRobin* distribution = data;
+	JDistributionWeighted* distribution = data;
 
 	g_return_if_fail(distribution != NULL);
 
@@ -194,11 +220,24 @@ distribution_set (gpointer data, gchar const* key, guint64 value)
 	{
 		distribution->block_size = value;
 	}
-	else if (g_strcmp0(key, "start-index") == 0)
-	{
-		g_return_if_fail(value < distribution->server_count);
+}
 
-		distribution->start_index = value;
+static
+void
+distribution_set2 (gpointer data, gchar const* key, guint64 value1, guint64 value2)
+{
+	JDistributionWeighted* distribution = data;
+
+	g_return_if_fail(distribution != NULL);
+
+	if (g_strcmp0(key, "weight") == 0)
+	{
+		g_return_if_fail(value1 < distribution->server_count);
+		g_return_if_fail(value2 < 256);
+		g_return_if_fail(distribution->sum + value2 - distribution->weights[value1] > 0);
+
+		distribution->sum += value2 - distribution->weights[value1];
+		distribution->weights[value1] = value2;
 	}
 }
 
@@ -220,14 +259,27 @@ static
 void
 distribution_serialize (gpointer data, bson_t* b)
 {
-	JDistributionRoundRobin* distribution = data;
+	JDistributionWeighted* distribution = data;
+
+	bson_t b_array[1];
+	gchar numstr[16];
 
 	g_return_if_fail(distribution != NULL);
 
 	j_trace_enter(G_STRFUNC, NULL);
 
 	bson_append_int64(b, "block_size", -1, distribution->block_size);
-	bson_append_int32(b, "start_index", -1, distribution->start_index);
+
+	bson_append_array_begin(b, "weights", -1, b_array);
+
+	for (guint i = 0; i < distribution->server_count; i++)
+	{
+		// FIXME
+		j_helper_get_number_string(numstr, sizeof(numstr), i);
+		bson_append_int32(b_array, numstr, -1, distribution->weights[i]);
+	}
+
+	bson_append_array_end(b, b_array);
 
 	j_trace_leave(G_STRFUNC);
 }
@@ -249,8 +301,7 @@ static
 void
 distribution_deserialize (gpointer data, bson_t const* b)
 {
-	JDistributionRoundRobin* distribution = data;
-
+	JDistributionWeighted* distribution = data;
 	bson_iter_t iterator;
 
 	g_return_if_fail(distribution != NULL);
@@ -270,9 +321,19 @@ distribution_deserialize (gpointer data, bson_t const* b)
 		{
 			distribution->block_size = bson_iter_int64(&iterator);
 		}
-		else if (g_strcmp0(key, "start_index") == 0)
+		else if (g_strcmp0(key, "weights") == 0)
 		{
-			distribution->start_index = bson_iter_int32(&iterator);
+			bson_iter_t siterator;
+
+			bson_iter_recurse(&iterator, &siterator);
+
+			distribution->sum = 0;
+
+			for (guint i = 0; bson_iter_next(&siterator); i++)
+			{
+				distribution->weights[i] = bson_iter_int32(&siterator);
+				distribution->sum += distribution->weights[i];
+			}
 		}
 	}
 
@@ -299,7 +360,7 @@ static
 void
 distribution_reset (gpointer data, guint64 length, guint64 offset)
 {
-	JDistributionRoundRobin* distribution = data;
+	JDistributionWeighted* distribution = data;
 
 	g_return_if_fail(distribution != NULL);
 
@@ -312,12 +373,12 @@ distribution_reset (gpointer data, guint64 length, guint64 offset)
 }
 
 void
-j_distribution_round_robin_get_vtable (JDistributionVTable* vtable)
+j_distribution_weighted_get_vtable (JDistributionVTable* vtable)
 {
 	vtable->distribution_new = distribution_new;
 	vtable->distribution_free = distribution_free;
 	vtable->distribution_set = distribution_set;
-	vtable->distribution_set2 = NULL;
+	vtable->distribution_set2 = distribution_set2;
 	vtable->distribution_serialize = distribution_serialize;
 	vtable->distribution_deserialize = distribution_deserialize;
 	vtable->distribution_reset = distribution_reset;
