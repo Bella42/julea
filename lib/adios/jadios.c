@@ -73,9 +73,9 @@ void
 var_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 {
 	gchar* key;
-	printf("-- JADIOS DEBUG PRINT: bson: metadata->shape %ld\n", metadata->shape_size);
-	printf("-- JADIOS DEBUG PRINT: bson: metadata->start %ld\n", metadata->start_size);
-	printf("-- JADIOS DEBUG PRINT: bson: metadata->count %ld\n", metadata->count_size);
+	// printf("-- JADIOS DEBUG PRINT: bson: metadata->shape_size %ld\n", metadata->shape_size);
+	// printf("-- JADIOS DEBUG PRINT: bson: metadata->start_size %ld\n", metadata->start_size);
+	// printf("-- JADIOS DEBUG PRINT: bson: metadata->count_size %ld\n", metadata->count_size);
 
 	assert(bson_append_int64(bson_meta_data, "shape_size", -1, metadata->shape_size));
 	for(guint i = 0; i < metadata->shape_size; i++)
@@ -545,19 +545,20 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 		if(g_strcmp0(bson_iter_key(&b_iter),"shape_size") == 0)
 		{
 			metadata->shape_size = bson_iter_int64(&b_iter);
-			printf("-- JADIOS DEBUG PRINT: shape_size = %ld \n", metadata->shape_size);
+			// printf("-- JADIOS DEBUG PRINT: shape_size = %ld \n", metadata->shape_size);
 
-			bson_iter_next(&b_iter);
+			// bson_iter_next(&b_iter);
 			if(metadata->shape_size > 0)
 			{
 				for(guint i = 0; i < metadata->shape_size; i++)
 				{
+					bson_iter_next(&b_iter);
 					key = g_strdup_printf("shape_%d",i);
 					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
 					{
 						metadata->shape[i] = bson_iter_int64(&b_iter);
 					}
-					bson_iter_next(&b_iter);
+					// bson_iter_next(&b_iter);
 				}
 			}
 		}
@@ -566,77 +567,86 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 			metadata->start_size = bson_iter_int64(&b_iter);
 			printf("-- JADIOS DEBUG PRINT: start_size = %ld \n", metadata->start_size);
 
-			bson_iter_next(&b_iter);
+			// bson_iter_next(&b_iter);
 			if(metadata->start_size > 0)
 			{
 				for(guint i = 0; i < metadata->start_size; i++)
 				{
+					bson_iter_next(&b_iter);
 					key = g_strdup_printf("start_%d",i);
 					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
 					{
 						metadata->start[i] = bson_iter_int64(&b_iter);
 					}
-					bson_iter_next(&b_iter);
+					// bson_iter_next(&b_iter);
 				}
 			}
 		}
 		else if(g_strcmp0(bson_iter_key(&b_iter),"count_size") == 0)
 		{
 			metadata->count_size = bson_iter_int64(&b_iter);
-			printf("-- JADIOS DEBUG PRINT: count_size = %ld \n", metadata->count_size);
+			// printf("-- JADIOS DEBUG PRINT: count_size = %ld \n", metadata->count_size);
 
-			bson_iter_next(&b_iter);
+			// bson_iter_next(&b_iter);
 			if(metadata->count_size > 0)
 			{
 				for(guint i = 0; i < metadata->count_size; i++)
 				{
+					bson_iter_next(&b_iter);
 					key = g_strdup_printf("count_%d",i);
 					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
 					{
 						metadata->count[i] = bson_iter_int64(&b_iter);
-						printf("-- JADIOS DEBUG PRINT: count[%d] = %ld \n",i, metadata->count[i]);
+						// printf("-- JADIOS DEBUG PRINT: count[%d] = %ld \n",i, metadata->count[i]);
 					}
-					bson_iter_next(&b_iter);
+					// bson_iter_next(&b_iter);
 				}
 			}
 		}
 		else if(g_strcmp0(bson_iter_key(&b_iter),"memory_start_size") == 0)
 		{
+			// printf("-- JADIOS DEBUG PRINT: REACHED 1 \n");
 			metadata->memory_start_size = bson_iter_int64(&b_iter);
 
+			// bson_iter_next(&b_iter);
 			if(metadata->memory_start_size > 0)
 			{
 				for(guint i = 0; i < metadata->memory_start_size; i++)
 				{
+					bson_iter_next(&b_iter);
 					key = g_strdup_printf("memory_start_%d",i);
 					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
 					{
 						metadata->memory_start[i] = bson_iter_int64(&b_iter);
 					}
-					bson_iter_next(&b_iter);
+					// bson_iter_next(&b_iter);
 				}
 			}
 		}
 		else if(g_strcmp0(bson_iter_key(&b_iter),"memory_count_size") == 0)
 		{
+			// printf("-- JADIOS DEBUG PRINT: REACHED 2 \n");
 			metadata->memory_count_size = bson_iter_int64(&b_iter);
 
+			// bson_iter_next(&b_iter);
 			if(metadata->memory_count_size > 0)
 			{
 				for(guint i = 0; i < metadata->memory_count_size; i++)
 				{
+					bson_iter_next(&b_iter);
 					key = g_strdup_printf("memory_count_%d",i);
 					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
 					{
 						metadata->memory_count[i] = bson_iter_int64(&b_iter);
 					}
-					bson_iter_next(&b_iter);
+					// bson_iter_next(&b_iter);
 				}
 			}
 		}
 		/* unsigned long */
 		else if(g_strcmp0(bson_iter_key(&b_iter),"steps_start") == 0)
 		{
+			// printf("-- JADIOS DEBUG PRINT: REACHED 3 \n");
 			metadata->steps_start = bson_iter_int64(&b_iter);
 		}
 		else if(g_strcmp0(bson_iter_key(&b_iter),"steps_count") == 0)
@@ -666,6 +676,7 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 		/* variable_type */
 		else if(g_strcmp0(bson_iter_key(&b_iter),"var_type") == 0)
 		{
+			// printf("-- JADIOS DEBUG PRINT: REACHED 4 \n");
 			metadata->var_type = (int) bson_iter_int64(&b_iter);
 		}
 		/* unsigned int */
@@ -676,6 +687,7 @@ int j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata*
 		/* boolean */
 		else if(g_strcmp0(bson_iter_key(&b_iter),"is_value") == 0)
 		{
+			// printf("-- JADIOS DEBUG PRINT: REACHED 5 \n");
 			metadata->is_value = (bool) bson_iter_bool(&b_iter);
 		}
 		else if(g_strcmp0(bson_iter_key(&b_iter),"is_single_value") == 0)
