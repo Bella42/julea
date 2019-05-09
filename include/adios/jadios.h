@@ -113,7 +113,7 @@ struct Metadata{
 	value_type curr_value;
 
 	unsigned int sizeof_var_type;	//store the actual size of the variable type
-	unsigned int data_size;		//FIXME: currently hardcoded in writer
+	unsigned int data_size;
 	// unsigned int deferred_counter; //VariableBase.h TODO: implement!
 
 	bool is_value;
@@ -164,10 +164,6 @@ void j_adios_get_var_metadata_from_kv(char* name_space, char* var_name, Metadata
 /* get attributes from kv store; hopefully soon from SMD backend */
 void j_adios_get_all_attr_names_from_kv(char* name_space, char*** names, int** types, unsigned int count_names, JSemantics* semantics);
 void j_adios_get_attr_metadata_from_kv(char* name_space, char* var_name, AttributeMetadata* attr_metadata, JSemantics* semantics);
-
-/* get metadata from SMD backend*/
-void j_adios_get_all_var_names_from_smd(char* name_space, char*** names, JSemantics* semantics);
-void j_adios_get_metadata_from_smd(char* name_space, Metadata* metadata, JSemantics* semantics);
 
 void j_adios_delete_variable(char* name_space, char* var_name, JBatch* batch);
 void j_adios_delete_attribute(char* name_space, char* attr_name, JBatch* batch);

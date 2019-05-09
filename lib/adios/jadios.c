@@ -251,7 +251,6 @@ void
 j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch)
 {
 	JBatch *batch_2;
-	// JBatch *batch_3;
 	guint64 bytes_written = 0; //nb = bytes written; see benchmark
 
 	bson_iter_t b_iter;
@@ -272,7 +271,6 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 
 	j_object_create(data_object, batch);
 	j_object_write(data_object, data_pointer, metadata->data_size, 0, &bytes_written, batch);
-	// j_object_write(data_object, data_pointer, 40, 0, &bytes_written, batch);
 
 	string_metadata_kv = g_strdup_printf("variables_%s", name_space);
 	kv_object_metadata = j_kv_new(string_metadata_kv, metadata->name);
@@ -548,7 +546,6 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		}
 		else if(g_strcmp0(bson_iter_key(&b_iter),"memory_start_size") == 0)
 		{
-			// printf("-- JADIOS DEBUG PRINT: REACHED 1 \n");
 			metadata->memory_start_size = bson_iter_int64(&b_iter);
 
 			if(metadata->memory_start_size > 0)
@@ -566,7 +563,6 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		}
 		else if(g_strcmp0(bson_iter_key(&b_iter),"memory_count_size") == 0)
 		{
-			// printf("-- JADIOS DEBUG PRINT: REACHED 2 \n");
 			metadata->memory_count_size = bson_iter_int64(&b_iter);
 
 			if(metadata->memory_count_size > 0)
@@ -834,61 +830,6 @@ j_adios_get_attr_metadata_from_kv(char* name_space, char* attr_name, AttributeMe
 	printf("---* Julea Adios Client: Get Attribute Metadata \n");
 }
 
-
-/**
- * Get all variables for the passed namespace from the structured metadata backend.
- *
- * \param [r] name_space    namespace of variable; defined by io.open("namespace")
- * \param [w] names      	Array of variable names
- * \param [r] semantics  	semantics to be used
- */
-void
-j_adios_get_all_var_names_from_smd(char* name_space, char*** names, JSemantics* semantics)
-{
-	JBatch* batch;
-	gchar* smd_name;
-	//JSMD smd_object = NULL;
-	batch = j_batch_new(semantics);
-
-	smd_name = g_strdup_printf("%s_%s", "metadata-", name_space);
-	// smd_object = j_smd_new("adios_metadata", metadata_kv);
-
-	// j_smd_get_all_var_names(smd_object, names batch);
-	//TODO: j_smd_get_all_var_names(name_space,names);
-	printf("-- JADIOS DEBUG PRINT: Namespace %s variable name %s \n",name_space, &names[0][0][0] );
-	// printf("---* Julea Adios Client: get_all_var_names (from smd) is not yet supported \n");
-
-	j_batch_execute(batch);
-	g_free(smd_name);
-}
-
-
-/**
- * Get metadata for the given name_space from the structured metadata backend.
- *
- * TODO: IMPLEMEMNT!
- * \param [r] name_space namespace of variable; defined by io.open("namespace")
- * \param [w] metadata   metadata information struct; needs to be allocated
- * \param [r] semantics  semantics to be used
- */
-void
-j_adios_get_metadata_from_smd(char* name_space, Metadata* metadata, JSemantics* semantics)
-{
-	JBatch* batch;
-	gchar* smd_name;
-	//JSMD smd_object = NULL;
-	batch = j_batch_new(semantics);
-
-	smd_name = g_strdup_printf("%s_%s", "metadata-", name_space);
-	// smd_object = j_smd_new("adios_metadata", metadata_kv);
-	//TODO: j_smd_get_metadata(name_space, metadata);
-
-	printf("-- JADIOS DEBUG PRINT: Namespace %s, variable \n", metadata->name);
-	printf("---* Julea Adios Client: Get Metadata from SMD \n");
-	// printf("---* Julea Adios Client: get_metadata (from smd) is not yet supported \n");
-	j_batch_execute(batch);
-	g_free(smd_name);
-}
 
 /**
  * Get the data for the passed variable from the object store.
