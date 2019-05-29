@@ -29,7 +29,7 @@ SELF_BASE="${SELF_PATH##*/}"
 
 usage ()
 {
-	echo "Usage: ${0##*/} start|stop|restart"
+	echo "Usage: ${SELF_BASE} start|stop|restart"
 	exit 1
 }
 
@@ -88,6 +88,15 @@ case "${MODE}" in
 		;;
 	stop-local)
 		setup_stop
+		;;
+	clean)
+		if ! setup_slurm "${MODE}"
+		then
+			setup_clean
+		fi
+		;;
+	clean-local)
+		setup_clean
 		;;
 	restart)
 		if ! setup_slurm stop

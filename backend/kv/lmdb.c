@@ -99,23 +99,23 @@ backend_batch_execute (gpointer data)
 
 static
 gboolean
-backend_put (gpointer data, gchar const* key, bson_t const* value)
+backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
 	JLMDBBatch* batch = data;
 	MDB_val m_key;
 	MDB_val m_value;
 	g_autofree gchar* nskey = NULL;
 
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 
 	m_key.mv_size = strlen(nskey) + 1;
 	m_key.mv_data = nskey;
-	m_value.mv_size = value->len;
-	m_value.mv_data = bson_get_data(value);
+	m_value.mv_size = len;
+	m_value.mv_data = value;
 
 	return (mdb_put(batch->txn, backend_dbi, &m_key, &m_value, 0) == 0);
 }
@@ -128,8 +128,8 @@ backend_delete (gpointer data, gchar const* key)
 	MDB_val m_key;
 	g_autofree gchar* nskey = NULL;
 
-	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
 
 	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 
@@ -141,49 +141,35 @@ backend_delete (gpointer data, gchar const* key)
 
 static
 gboolean
-backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
+backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
 	gboolean ret = FALSE;
 
-	MDB_txn* txn;
+	JLMDBBatch* batch = data;
 	MDB_val m_key;
 	MDB_val m_value;
 	g_autofree gchar* nskey = NULL;
 
-	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
-	if (mdb_txn_begin(backend_env, NULL, 0, &txn) != 0)
-	{
-		goto error;
-	}
-
-	nskey = g_strdup_printf("%s:%s", namespace, key);
+	nskey = g_strdup_printf("%s:%s", batch->namespace, key);
 
 	m_key.mv_size = strlen(nskey) + 1;
 	m_key.mv_data = nskey;
 
-	if (mdb_get(txn, backend_dbi, &m_key, &m_value) == 0)
+	if (mdb_get(batch->txn, backend_dbi, &m_key, &m_value) == 0)
 	{
-		bson_t tmp[1];
-
 		// FIXME check whether copies can be avoided
-		bson_init_static(tmp, m_value.mv_data, m_value.mv_size);
-		bson_copy_to(tmp, result_out);
+		*value = g_memdup(m_value.mv_data, m_value.mv_size);
+		*len = m_value.mv_size;
 
 		ret = TRUE;
 	}
 
-	if (mdb_txn_commit(txn) != 0)
-	{
-		goto error;
-	}
-
 	return ret;
-
-error:
-	return FALSE;
 }
 
 static
@@ -231,7 +217,7 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 static
 gboolean
-backend_iterate (gpointer data, bson_t* result_out)
+backend_iterate (gpointer data, gconstpointer* value, guint32* len)
 {
 	JLMDBIterator* iterator = data;
 	MDB_cursor_op cursor_op = MDB_NEXT;
@@ -239,7 +225,8 @@ backend_iterate (gpointer data, bson_t* result_out)
 	MDB_val m_value;
 
 	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
 	if (iterator->first)
 	{
@@ -260,7 +247,8 @@ backend_iterate (gpointer data, bson_t* result_out)
 			goto out;
 		}
 
-		bson_init_static(result_out, m_value.mv_data, m_value.mv_size);
+		*value = m_value.mv_data;
+		*len = m_value.mv_size;
 
 		return TRUE;
 	}

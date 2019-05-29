@@ -27,6 +27,14 @@
 
 #include <julea.h>
 
+struct JMongoDBBatch
+{
+	mongoc_bulk_operation_t* bulk_op;
+	gchar* namespace;
+};
+
+typedef struct JMongoDBBatch JMongoDBBatch;
+
 static mongoc_client_t* backend_connection = NULL;
 
 static gchar* backend_host = NULL;
@@ -36,6 +44,7 @@ static
 gboolean
 backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* data)
 {
+	JMongoDBBatch* batch;
 	bson_t command[1];
 	bson_t index[1];
 	bson_t indexes[1];
@@ -106,7 +115,11 @@ backend_batch_start (gchar const* namespace, JSemanticsSafety safety, gpointer* 
 	bson_destroy(command);
 	bson_destroy(reply);
 
-	*data = bulk_op;
+	batch = g_slice_new(JMongoDBBatch);
+	batch->bulk_op = bulk_op;
+	batch->namespace = g_strdup(namespace);
+
+	*data = batch;
 
 	return TRUE;
 }
@@ -117,12 +130,13 @@ backend_batch_execute (gpointer data)
 {
 	gboolean ret = FALSE;
 
+	JMongoDBBatch* batch = data;
+
 	bson_t reply[1];
-	mongoc_bulk_operation_t* bulk_op = data;
 
 	g_return_val_if_fail(data != NULL, FALSE);
 
-	ret = mongoc_bulk_operation_execute(bulk_op, reply, NULL);
+	ret = mongoc_bulk_operation_execute(batch->bulk_op, reply, NULL);
 
 	/*
 	if (!ret)
@@ -135,34 +149,36 @@ backend_batch_execute (gpointer data)
 	}
 	*/
 
-	mongoc_bulk_operation_destroy(bulk_op);
+	mongoc_bulk_operation_destroy(batch->bulk_op);
 	bson_destroy(reply);
+	g_free(batch->namespace);
+	g_slice_free(JMongoDBBatch, batch);
 
 	return ret;
 }
 
 static
 gboolean
-backend_put (gpointer data, gchar const* key, bson_t const* value)
+backend_put (gpointer data, gchar const* key, gconstpointer value, guint32 len)
 {
+	JMongoDBBatch* batch = data;
 	bson_t document[1];
 	bson_t selector[1];
-	mongoc_bulk_operation_t* bulk_op = data;
 
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
-	g_return_val_if_fail(data != NULL, FALSE);
 
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
-	bson_append_document(document, "value", -1, value);
+	bson_append_binary(document, "value", -1, BSON_SUBTYPE_BINARY, value, len);
 
 	bson_init(selector);
 	bson_append_utf8(selector, "key", -1, key, -1);
 
 	/* FIXME use insert when possible */
-	//mongoc_bulk_operation_insert(bulk_op, document);
-	mongoc_bulk_operation_replace_one(bulk_op, selector, document, TRUE);
+	//mongoc_bulk_operation_insert(batch->bulk_op, document);
+	mongoc_bulk_operation_replace_one(batch->bulk_op, selector, document, TRUE);
 
 	/*
 	if (!ret)
@@ -185,16 +201,16 @@ static
 gboolean
 backend_delete (gpointer data, gchar const* key)
 {
+	JMongoDBBatch* batch = data;
 	bson_t document[1];
-	mongoc_bulk_operation_t* bulk_op = data;
 
-	g_return_val_if_fail(key != NULL, FALSE);
 	g_return_val_if_fail(data != NULL, FALSE);
+	g_return_val_if_fail(key != NULL, FALSE);
 
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
 
-	mongoc_bulk_operation_remove(bulk_op, document);
+	mongoc_bulk_operation_remove(batch->bulk_op, document);
 
 	bson_destroy(document);
 
@@ -203,9 +219,11 @@ backend_delete (gpointer data, gchar const* key)
 
 static
 gboolean
-backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
+backend_get (gpointer data, gchar const* key, gpointer* value, guint32* len)
 {
 	gboolean ret = FALSE;
+
+	JMongoDBBatch* batch = data;
 
 	bson_t document[1];
 	bson_t opts[1];
@@ -213,9 +231,10 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 	mongoc_collection_t* m_collection;
 	mongoc_cursor_t* cursor;
 
-	g_return_val_if_fail(namespace != NULL, FALSE);
+	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(key != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
 	bson_init(document);
 	bson_append_utf8(document, "key", -1, key, -1);
@@ -223,23 +242,22 @@ backend_get (gchar const* namespace, gchar const* key, bson_t* result_out)
 	bson_init(opts);
 	bson_append_int32(opts, "limit", -1, 1);
 
-	m_collection = mongoc_client_get_collection(backend_connection, backend_database, namespace);
+	m_collection = mongoc_client_get_collection(backend_connection, backend_database, batch->namespace);
 	cursor = mongoc_collection_find_with_opts(m_collection, document, opts, NULL);
 
 	while (mongoc_cursor_next(cursor, &result))
 	{
 		bson_iter_t iter;
 
-		if (bson_iter_init_find(&iter, result, "value") && bson_iter_type(&iter) == BSON_TYPE_DOCUMENT)
+		if (bson_iter_init_find(&iter, result, "value") && bson_iter_type(&iter) == BSON_TYPE_BINARY)
 		{
-			bson_t tmp[1];
-			bson_value_t const* value;
+			bson_value_t const* bv;
 
-			value = bson_iter_value(&iter);
-			bson_init_static(tmp, value->value.v_doc.data, value->value.v_doc.data_len);
+			bv = bson_iter_value(&iter);
+			*value = g_memdup(bv->value.v_binary.data, bv->value.v_binary.data_len);
+			*len = bv->value.v_binary.data_len;
 
 			ret = TRUE;
-			bson_copy_to(tmp, result_out);
 
 			break;
 		}
@@ -325,7 +343,7 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 static
 gboolean
-backend_iterate (gpointer data, bson_t* result_out)
+backend_iterate (gpointer data, gconstpointer* value, guint32* len)
 {
 	bson_t const* result;
 	bson_iter_t iter;
@@ -334,17 +352,19 @@ backend_iterate (gpointer data, bson_t* result_out)
 	gboolean ret = FALSE;
 
 	g_return_val_if_fail(data != NULL, FALSE);
-	g_return_val_if_fail(result_out != NULL, FALSE);
+	g_return_val_if_fail(value != NULL, FALSE);
+	g_return_val_if_fail(len != NULL, FALSE);
 
 	/* FIXME */
 	if (mongoc_cursor_next(cursor, &result))
 	{
 		if (bson_iter_init_find(&iter, result, "value") && bson_iter_type(&iter) == BSON_TYPE_DOCUMENT)
 		{
-			bson_value_t const* value;
+			bson_value_t const* bv;
 
-			value = bson_iter_value(&iter);
-			bson_init_static(result_out, value->value.v_doc.data, value->value.v_doc.data_len);
+			bv = bson_iter_value(&iter);
+			*value = bv->value.v_doc.data;
+			*len = bv->value.v_doc.data_len;
 
 			ret = TRUE;
 		}

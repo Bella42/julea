@@ -463,16 +463,14 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					for (i = 0; i < operation_count; i++)
 					{
-						bson_t value[1];
 						gconstpointer data;
 						guint32 len;
 
 						key = j_message_get_string(message);
 						len = j_message_get_4(message);
 						data = j_message_get_n(message, len);
-						bson_init_static(value, data, len);
 
-						j_backend_kv_put(jd_kv_backend, batch, key, value);
+						j_backend_kv_put(jd_kv_backend, batch, key, data, len);
 
 						if (reply != NULL)
 						{
@@ -524,23 +522,26 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_KV_GET:
 				{
 					g_autoptr(JMessage) reply = NULL;
+					gpointer batch;
 
 					reply = j_message_new_reply(message);
 					namespace = j_message_get_string(message);
+					j_backend_kv_batch_start(jd_kv_backend, namespace, safety, &batch);
 
 					for (i = 0; i < operation_count; i++)
 					{
-						bson_t value[1];
+						gpointer value;
+						guint32 len;
 
 						key = j_message_get_string(message);
 
-						if (j_backend_kv_get(jd_kv_backend, namespace, key, value))
+						if (j_backend_kv_get(jd_kv_backend, batch, key, &value, &len))
 						{
-							j_message_add_operation(reply, 4 + value->len);
-							j_message_append_4(reply, &(value->len));
-							j_message_append_n(reply, bson_get_data(value), value->len);
+							j_message_add_operation(reply, 4 + len);
+							j_message_append_4(reply, &len);
+							j_message_append_n(reply, value, len);
 
-							bson_destroy(value);
+							g_free(value);
 						}
 						else
 						{
@@ -551,14 +552,17 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 						}
 					}
 
+					j_backend_kv_batch_execute(jd_kv_backend, batch);
+
 					j_message_send(reply, connection);
 				}
 				break;
 			case J_MESSAGE_KV_GET_ALL:
 				{
 					g_autoptr(JMessage) reply = NULL;
-					bson_t value[1];
 					gpointer iterator;
+					gconstpointer value;
+					guint32 len;
 					guint32 zero = 0;
 
 					reply = j_message_new_reply(message);
@@ -566,12 +570,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					j_backend_kv_get_all(jd_kv_backend, namespace, &iterator);
 
-					while (j_backend_kv_iterate(jd_kv_backend, iterator, value))
+					while (j_backend_kv_iterate(jd_kv_backend, iterator, &value, &len))
 					{
-						j_message_add_operation(reply, 4 + value->len);
-						j_message_append_4(reply, &(value->len));
-						j_message_append_n(reply, bson_get_data(value), value->len);
-						bson_destroy(value);
+						j_message_add_operation(reply, 4 + len);
+						j_message_append_4(reply, &len);
+						j_message_append_n(reply, value, len);
 					}
 
 					j_message_add_operation(reply, 4);
@@ -583,9 +586,10 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 			case J_MESSAGE_KV_GET_BY_PREFIX:
 				{
 					g_autoptr(JMessage) reply = NULL;
-					bson_t value[1];
 					gchar const* prefix;
 					gpointer iterator;
+					gconstpointer value;
+					guint32 len;
 					guint32 zero = 0;
 
 					reply = j_message_new_reply(message);
@@ -594,12 +598,11 @@ jd_on_run (GThreadedSocketService* service, GSocketConnection* connection, GObje
 
 					j_backend_kv_get_by_prefix(jd_kv_backend, namespace, prefix, &iterator);
 
-					while (j_backend_kv_iterate(jd_kv_backend, iterator, value))
+					while (j_backend_kv_iterate(jd_kv_backend, iterator, &value, &len))
 					{
-						j_message_add_operation(reply, 4 + value->len);
-						j_message_append_4(reply, &(value->len));
-						j_message_append_n(reply, bson_get_data(value), value->len);
-						bson_destroy(value);
+						j_message_add_operation(reply, 4 + len);
+						j_message_append_4(reply, &len);
+						j_message_append_n(reply, value, len);
 					}
 
 					j_message_add_operation(reply, 4);

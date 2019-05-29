@@ -155,8 +155,6 @@ struct JConfiguration
 /**
  * Creates a new configuration.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -241,8 +239,6 @@ out:
 
 /**
  * Creates a new configuration for the given configuration data.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -366,8 +362,6 @@ j_configuration_new_for_data (GKeyFile* key_file)
 /**
  * Increases a configuration's reference count.
  *
- * \author Michael Kuhn
- *
  * \code
  * JConfiguration* c;
  *
@@ -391,8 +385,6 @@ j_configuration_ref (JConfiguration* configuration)
 /**
  * Decreases a configuration's reference count.
  * When the reference count reaches zero, frees the memory allocated for the configuration.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode

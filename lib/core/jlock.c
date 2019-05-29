@@ -61,8 +61,6 @@ struct JLock
 /**
  * Creates a new lock.
  *
- * \author Michael Kuhn
- *
  * \code
  * JItem* item;
  * JLock* lock;
@@ -99,8 +97,6 @@ j_lock_new (gchar const* namespace, gchar const* path)
 
 /**
  * Frees the memory allocated for the lock.
- *
- * \author Michael Kuhn
  *
  * \code
  * JLock* lock;
@@ -183,7 +179,7 @@ j_lock_acquire (JLock* lock)
 				g_autofree gchar* path = NULL;
 
 				path = g_build_path("/", lock->namespace, lock->path, block_str, NULL);
-				acquired = j_backend_kv_put(kv_backend, kv_batch, path, empty) && acquired;
+				acquired = j_backend_kv_put(kv_backend, kv_batch, path, bson_get_data(empty), empty->len) && acquired;
 			}
 		}
 
