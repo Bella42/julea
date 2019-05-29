@@ -24,8 +24,6 @@
 
 #include <glib.h>
 
-#include <bson.h>
-
 #include <kv/jkv-iterator.h>
 
 #include <kv/jkv.h>
@@ -50,17 +48,16 @@ struct JKVIterator
 	gpointer cursor;
 
 	/**
-	 * The current document.
+	 * The current value.
 	 **/
-	bson_t current[1];
+	gconstpointer value;
+	guint32 len;
 
 	JMessage* reply;
 };
 
 /**
  * Creates a new JKVIterator.
- *
- * \author Michael Kuhn
  *
  * \param store A JStore.
  *
@@ -139,8 +136,6 @@ j_kv_iterator_new (guint32 index, gchar const* namespace, gchar const* prefix)
 /**
  * Frees the memory allocated by the JKVIterator.
  *
- * \author Michael Kuhn
- *
  * \param iterator A JKVIterator.
  **/
 void
@@ -159,8 +154,6 @@ j_kv_iterator_free (JKVIterator* iterator)
 /**
  * Checks whether another collection is available.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -177,20 +170,15 @@ j_kv_iterator_next (JKVIterator* iterator)
 
 	if (iterator->kv_backend != NULL)
 	{
-		ret = j_backend_kv_iterate(iterator->kv_backend, iterator->cursor, iterator->current);
+		ret = j_backend_kv_iterate(iterator->kv_backend, iterator->cursor, &(iterator->value), &(iterator->len));
 	}
 	else
 	{
-		guint32 len;
+		iterator->len = j_message_get_4(iterator->reply);
 
-		len = j_message_get_4(iterator->reply);
-
-		if (len > 0)
+		if (iterator->len > 0)
 		{
-			gconstpointer data;
-
-			data = j_message_get_n(iterator->reply, len);
-			bson_init_static(iterator->current, data, len);
+			iterator->value = j_message_get_n(iterator->reply, iterator->len);
 
 			ret = TRUE;
 		}
@@ -202,8 +190,6 @@ j_kv_iterator_next (JKVIterator* iterator)
 /**
  * Returns the current collection.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -211,13 +197,16 @@ j_kv_iterator_next (JKVIterator* iterator)
  *
  * \return A new collection. Should be freed with j_kv_unref().
  **/
-bson_t const*
-j_kv_iterator_get (JKVIterator* iterator)
+gconstpointer
+j_kv_iterator_get (JKVIterator* iterator, guint32* len)
 {
 	g_return_val_if_fail(iterator != NULL, NULL);
+	g_return_val_if_fail(len != NULL, NULL);
+
+	*len = iterator->len;
 
 	// FIXME return key
-	return iterator->current;
+	return iterator->value;
 }
 
 /**

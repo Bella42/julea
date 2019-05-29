@@ -52,8 +52,6 @@ struct JItemIterator
 /**
  * Creates a new JItemIterator.
  *
- * \author Michael Kuhn
- *
  * \param collection A JCollection.
  *
  * \return A new JItemIterator.
@@ -78,8 +76,6 @@ j_item_iterator_new (JCollection* collection)
 /**
  * Frees the memory allocated by the JItemIterator.
  *
- * \author Michael Kuhn
- *
  * \param iterator A JItemIterator.
  **/
 void
@@ -95,8 +91,6 @@ j_item_iterator_free (JItemIterator* iterator)
 
 /**
  * Checks whether another item is available.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -116,8 +110,6 @@ j_item_iterator_next (JItemIterator* iterator)
 /**
  * Returns the current item.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -129,12 +121,15 @@ JItem*
 j_item_iterator_get (JItemIterator* iterator)
 {
 	JItem* item;
-	bson_t const* value;
+	bson_t tmp[1];
+	gconstpointer value;
+	guint32 len;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	value = j_kv_iterator_get(iterator->iterator);
-	item = j_item_new_from_bson(iterator->collection, value);
+	value = j_kv_iterator_get(iterator->iterator, &len);
+	bson_init_static(tmp, value, len);
+	item = j_item_new_from_bson(iterator->collection, tmp);
 
 	return item;
 }

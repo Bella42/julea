@@ -49,8 +49,6 @@ struct JCollectionIterator
 /**
  * Creates a new JCollectionIterator.
  *
- * \author Michael Kuhn
- *
  * \param store A JStore.
  *
  * \return A new JCollectionIterator.
@@ -69,8 +67,6 @@ j_collection_iterator_new (void)
 /**
  * Frees the memory allocated by the JCollectionIterator.
  *
- * \author Michael Kuhn
- *
  * \param iterator A JCollectionIterator.
  **/
 void
@@ -85,8 +81,6 @@ j_collection_iterator_free (JCollectionIterator* iterator)
 
 /**
  * Checks whether another collection is available.
- *
- * \author Michael Kuhn
  *
  * \code
  * \endcode
@@ -106,8 +100,6 @@ j_collection_iterator_next (JCollectionIterator* iterator)
 /**
  * Returns the current collection.
  *
- * \author Michael Kuhn
- *
  * \code
  * \endcode
  *
@@ -119,12 +111,15 @@ JCollection*
 j_collection_iterator_get (JCollectionIterator* iterator)
 {
 	JCollection* collection;
-	bson_t const* value;
+	bson_t tmp[1];
+	gconstpointer value;
+	guint32 len;
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	value = j_kv_iterator_get(iterator->iterator);
-	collection = j_collection_new_from_bson(value);
+	value = j_kv_iterator_get(iterator->iterator, &len);
+	bson_init_static(tmp, value, len);
+	collection = j_collection_new_from_bson(tmp);
 
 	return collection;
 }
