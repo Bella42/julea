@@ -252,6 +252,7 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 {
 	JBatch *batch_2;
 	guint64 bytes_written = 0; //nb = bytes written; see benchmark
+	guint32 value_len = 0;
 
 	bson_iter_t b_iter;
 	bson_t* bson_meta_data;
@@ -276,17 +277,23 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 	kv_object_metadata = j_kv_new(string_metadata_kv, metadata->name);
 	kv_object_names = j_kv_new("variable_names", name_space);
 
+
+
 	bson_meta_data = bson_new();
 	bson_names = bson_new();
 
-	j_kv_get(kv_object_names, bson_names, batch_2);
+	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 1 \n");
+	j_kv_get(kv_object_names,(void*) bson_names, &value_len, batch_2);
 	j_batch_execute(batch_2);
+	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 2  \n");
 
 	/* check if variable name is already in kv store */
 	if(!bson_iter_init_find(&b_iter, bson_names, metadata->name))
 	{
+	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 3  \n");
 		printf("Init b_iter successfull \n");
 		bson_append_int32(bson_names, metadata->name,-1, metadata->var_type);
+	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 4  \n");
 	}
 	else
 	{
@@ -294,9 +301,11 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 	}
 
 	var_metadata_to_bson(metadata, bson_meta_data);
+	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 5  \n");
 
-	j_kv_put(kv_object_metadata, bson_meta_data, batch);
-	j_kv_put(kv_object_names, bson_names, batch);
+	j_kv_put(kv_object_metadata, bson_meta_data, bson_meta_data->len, bson_destroy, batch); //FIXME
+	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 6  \n");
+	j_kv_put(kv_object_names, bson_names,bson_names->len, bson_destroy, batch);	//FIXME
 	//j_smd_put_metadata(name_space, metadata, batch); //TODO use SMD backend
 
 	if(use_batch)
@@ -336,6 +345,7 @@ j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, void* 
 {
 	JBatch *batch_2;
 	guint64 bytes_written = 0; //nb = bytes written; see benchmark
+	guint32 value_len = 0;
 
 	bson_iter_t *b_iter = NULL;
 	bson_t* bson_meta_data;
@@ -375,7 +385,9 @@ j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, void* 
 	bson_meta_data = bson_new();
 	bson_names = bson_new();
 
-	j_kv_get(kv_object_names, bson_names, batch_2);
+	value_len = strlen(name_space);
+
+	j_kv_get(kv_object_names, (void*) bson_names, &value_len, batch_2); //FIXME
 	j_batch_execute(batch_2);
 
 	/* check if variable name is already in kv store */
@@ -389,9 +401,11 @@ j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, void* 
 		printf("---* Julea Adios Client: Attribute %s already in kv store. \n", attr_metadata->name);
 	}
 
+	value_len = strlen(attr_metadata->name);
 	attr_metadata_to_bson(attr_metadata, bson_meta_data);
-	j_kv_put(kv_object_metadata, bson_meta_data, batch);
-	j_kv_put(kv_object_names, bson_names, batch);
+	j_kv_put(kv_object_metadata, bson_meta_data,value_len, g_free, batch); //FIXME
+	value_len = strlen(name_space);
+	j_kv_put(kv_object_names, bson_names,value_len, g_free, batch);//FIXME
 
 	//j_smd_put_metadata(name_space, metadata, batch); //TODO use SMD backend
 
@@ -424,6 +438,7 @@ j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, 
 {
 	bson_t* bson_names;
 	bson_iter_t b_iter;
+	guint32 value_len= 0;
 
 	g_autoptr(JKV) kv_object = NULL;
 
@@ -432,7 +447,8 @@ j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, 
 	kv_object = j_kv_new("variable_names", name_space);
 	bson_names = bson_new();
 
-	j_kv_get(kv_object, bson_names, batch);
+	value_len = strlen(name_space);
+	j_kv_get(kv_object, (void*) bson_names, &value_len, batch);	//FIXME
 	j_batch_execute(batch);
 
 	*count_names = bson_count_keys(bson_names);
@@ -472,6 +488,7 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 	gchar* key;
 	bson_t* bson_metadata;
 	bson_iter_t b_iter;
+	guint32 value_len = 0;
 
 	g_autoptr(JKV) kv_object = NULL;
 	batch = j_batch_new(semantics);
@@ -480,7 +497,8 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 	kv_object = j_kv_new(string_metadata_kv, var_name);
 	bson_metadata = bson_new();
 
-	j_kv_get(kv_object, bson_metadata, batch);
+	value_len = strlen(var_name);
+	j_kv_get(kv_object,(void*) bson_metadata, &value_len, batch); //FIXME
 	j_batch_execute(batch);
 
 	bson_iter_init(&b_iter, bson_metadata);
@@ -747,6 +765,7 @@ j_adios_get_all_attr_names_from_kv(char* name_space, char*** names, int** types,
 {
 	bson_t* bson_names;
 	bson_iter_t* b_iter = NULL;
+	guint32 value_len = 0;
 
 	g_autoptr(JKV) kv_object = NULL;
 
@@ -755,7 +774,8 @@ j_adios_get_all_attr_names_from_kv(char* name_space, char*** names, int** types,
 	kv_object = j_kv_new("attribute_names", name_space);
 	bson_names = bson_new();
 
-	j_kv_get(kv_object, bson_names, batch);
+	value_len = strlen(name_space);
+	j_kv_get(kv_object, (void*) bson_names, &value_len, batch); //FIXME
 	count_names = bson_count_keys(bson_names);
 
 	*names = g_slice_alloc(count_names* sizeof(char*));
@@ -791,6 +811,7 @@ j_adios_get_attr_metadata_from_kv(char* name_space, char* attr_name, AttributeMe
 	gchar* string_metadata_kv;
 	bson_t* bson_metadata;
 	bson_iter_t* b_iter = NULL;
+	guint32 value_len = 0;
 
 	g_autoptr(JKV) kv_object = NULL;
 	batch = j_batch_new(semantics);
@@ -799,7 +820,8 @@ j_adios_get_attr_metadata_from_kv(char* name_space, char* attr_name, AttributeMe
 	kv_object = j_kv_new(string_metadata_kv, attr_name);
 	bson_metadata = bson_new();
 
-	j_kv_get(kv_object, bson_metadata, batch);
+	value_len = strlen(attr_name);
+	j_kv_get(kv_object, (void*) bson_metadata, &value_len, batch);
 	bson_iter_init(b_iter, bson_metadata);
 
 	while(bson_iter_next(b_iter))
