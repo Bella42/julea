@@ -265,6 +265,9 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 	gchar *string_metadata_kv;
 	gchar *string_data_object;
 
+	gpointer names_buf = NULL;
+	gpointer meta_data_buf = NULL;
+
 	batch_2 = j_batch_new(j_batch_get_semantics(batch));
 
 	string_data_object = g_strdup_printf("%s_variables_%s", name_space, metadata->name);
@@ -278,14 +281,13 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 	kv_object_names = j_kv_new("variable_names", name_space);
 
 
-
-	bson_meta_data = bson_new();
-	bson_names = bson_new();
-
 	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 1 \n");
-	j_kv_get(kv_object_names,(void*) bson_names, &value_len, batch_2);
+	j_kv_get(kv_object_names, names_buf, &value_len, batch_2);
 	j_batch_execute(batch_2);
 	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 2  \n");
+
+	bson_names = bson_new_from_data(names_buf, value_len);
+	g_free(names_buf);
 
 	/* check if variable name is already in kv store */
 	if(!bson_iter_init_find(&b_iter, bson_names, metadata->name))
@@ -300,12 +302,16 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 		printf("---* Julea Adios Client: Variable %s already in kv store. \n", metadata->name);
 	}
 
+	bson_meta_data = bson_new();
 	var_metadata_to_bson(metadata, bson_meta_data);
 	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 5  \n");
 
-	j_kv_put(kv_object_metadata, bson_meta_data, bson_meta_data->len, bson_destroy, batch); //FIXME
+	meta_data_buf = g_memdup(bson_meta_data, bson_meta_data->len);
+	names_buf = g_memdup(bson_names, bson_names->len);
+
+	j_kv_put(kv_object_metadata, meta_data_buf, bson_meta_data->len, g_free, batch);
 	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 6  \n");
-	j_kv_put(kv_object_names, bson_names,bson_names->len, bson_destroy, batch);	//FIXME
+	j_kv_put(kv_object_names, names_buf, bson_names->len, g_free, batch);
 	//j_smd_put_metadata(name_space, metadata, batch); //TODO use SMD backend
 
 	if(use_batch)
