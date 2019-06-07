@@ -250,8 +250,6 @@ j_adios_finish(void)
 void
 j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch)
 {
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 1  \n");
-
 	JBatch *batch_2;
 	guint64 bytes_written = 0; //nb = bytes written; see benchmark
 	guint32 value_len = 0;
@@ -271,7 +269,6 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 	gpointer meta_data_buf = NULL;
 
 	batch_2 = j_batch_new(j_batch_get_semantics(batch));
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 2  \n");
 
 	string_data_object = g_strdup_printf("%s_variables_%s", name_space, metadata->name);
 	data_object = j_object_new(string_data_object, metadata->name);
@@ -283,33 +280,16 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 	kv_object_metadata = j_kv_new(string_metadata_kv, metadata->name);
 	kv_object_names = j_kv_new("variable_names", name_space);
 
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 3  \n");
-
-	j_kv_get(kv_object_names, names_buf, &value_len, batch_2);
-	if(kv_object_names == NULL)
-	{
-		printf("-- JADIOS DEBUG PRINT: kv_object_names is NULL \n");
-	}
-	if(names_buf == NULL)
-	{
-		printf("-- JADIOS DEBUG PRINT: names_buf is NULL \n");
-	}
-	printf("value_len %d\n",value_len );
-
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 4  \n");
+	j_kv_get(kv_object_names, &names_buf, &value_len, batch_2);
 	j_batch_execute(batch_2);
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 5  \n");
-	printf("value_len %d\n",value_len );
 
 	if(value_len == 0)
 	{
 		bson_names = bson_new();
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 6  \n");
 	}
 	else
 	{
 		bson_names = bson_new_from_data(names_buf, value_len);
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 7  \n");
 	}
 	g_free(names_buf);
 
@@ -325,18 +305,12 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 	}
 
 	bson_meta_data = bson_new();
-	printf("bson_meta_data->len %d\n", bson_meta_data->len);
 	var_metadata_to_bson(metadata, bson_meta_data);
 
-	printf("bson_meta_data->len %d\n", bson_meta_data->len);
-
 	meta_data_buf = g_memdup(bson_get_data(bson_meta_data), bson_meta_data->len);
-
 	names_buf = g_memdup(bson_get_data(bson_names), bson_names->len);
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 8  \n");
 
 	j_kv_put(kv_object_metadata, meta_data_buf, bson_meta_data->len, g_free, batch);
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 9  \n");
 	j_kv_put(kv_object_names, names_buf, bson_names->len, g_free, batch);
 	//j_smd_put_metadata(name_space, metadata, batch); //TODO use SMD backend
 
