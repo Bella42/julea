@@ -471,7 +471,7 @@ j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, 
 	}
 
 	*count_names = bson_count_keys(bson_names);
-	printf("-- JADIOS DEBUG PRINT: count_names %d\n",*count_names );
+	// printf("-- JADIOS DEBUG PRINT: count_names %d\n",*count_names );
 
 	*names = g_slice_alloc(*count_names * sizeof(char*));
 	*types = g_slice_alloc(*count_names * sizeof(int));
@@ -485,8 +485,8 @@ j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, 
 		}
 		(*names)[i] = g_strdup(bson_iter_key(&b_iter));
 		(*types)[i] = bson_iter_int32(&b_iter);
-		printf("-- JADIOS DEBUG PRINT: get_all_var_names_from_kv DEBUG PRINT: %s\n", (*names)[i]);
-		printf("-- JADIOS DEBUG PRINT: types DEBUG PRINT: %d\n", (*types)[i]);
+		// printf("-- JADIOS DEBUG PRINT: get_all_var_names_from_kv DEBUG PRINT: %s\n", (*names)[i]);
+		// printf("-- JADIOS DEBUG PRINT: types DEBUG PRINT: %d\n", (*types)[i]);
 	}
 }
 
@@ -514,7 +514,6 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 	gpointer names_buf = NULL;
 	batch = j_batch_new(semantics);
 
-	printf("-- JADIOS DEBUG PRINT: j_adios_get_var_metadata_from_kv \n");
 	string_metadata_kv = g_strdup_printf("variables_%s", name_space);
 	kv_object = j_kv_new(string_metadata_kv, var_name);
 	// bson_metadata = bson_new();
@@ -523,7 +522,6 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 	j_kv_get(kv_object, &names_buf, &value_len, batch); //FIXME
 	j_batch_execute(batch);
 
-	printf("-- JADIOS DEBUG PRINT: 1 \n");
 	if(value_len == 0)
 	{
 		// bson_names = bson_new();
@@ -534,7 +532,6 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		bson_metadata = bson_new_from_data(names_buf, value_len);
 	}
 
-	printf("-- JADIOS DEBUG PRINT: 2 \n");
 	bson_iter_init(&b_iter, bson_metadata);
 
 	/* probably not very efficient */
@@ -543,7 +540,7 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		if(g_strcmp0(bson_iter_key(&b_iter),"shape_size") == 0)
 		{
 			metadata->shape_size = bson_iter_int64(&b_iter);
-			printf("-- JADIOS DEBUG PRINT: shape_size = %ld \n", metadata->shape_size);
+			// printf("-- JADIOS DEBUG PRINT: shape_size = %ld \n", metadata->shape_size);
 
 			if(metadata->shape_size > 0)
 			{
@@ -561,7 +558,7 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		else if(g_strcmp0(bson_iter_key(&b_iter),"start_size") == 0)
 		{
 			metadata->start_size = bson_iter_int64(&b_iter);
-			printf("-- JADIOS DEBUG PRINT: start_size = %ld \n", metadata->start_size);
+			// printf("-- JADIOS DEBUG PRINT: start_size = %ld \n", metadata->start_size);
 
 			if(metadata->start_size > 0)
 			{
@@ -579,22 +576,18 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		else if(g_strcmp0(bson_iter_key(&b_iter),"count_size") == 0)
 		{
 			metadata->count_size = bson_iter_int64(&b_iter);
-			printf("-- JADIOS DEBUG PRINT: count_size = %ld \n", metadata->count_size);
+			// printf("-- JADIOS DEBUG PRINT: count_size = %ld \n", metadata->count_size);
 
 			if(metadata->count_size > 0)
 			{
 				for(guint i = 0; i < metadata->count_size; i++)
 				{
-						printf("-- JADIOS DEBUG PRINT: 3.1 \n");
 					bson_iter_next(&b_iter);
 					key = g_strdup_printf("count_%d",i);
 					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
 					{
-						printf("-- JADIOS DEBUG PRINT: 3.2 \n");
 						metadata->count[i] = bson_iter_int64(&b_iter);
-
 						// printf("-- JADIOS DEBUG PRINT: count[%d] = %ld \n",i, metadata->count[i]);
-						printf("-- JADIOS DEBUG PRINT: 3.3 \n");
 					}
 				}
 			}
@@ -670,9 +663,7 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		/* unsigned int */
 		else if(g_strcmp0(bson_iter_key(&b_iter),"data_size") == 0)
 		{
-			printf("-- JADIOS DEBUG PRINT: 4 \n");
 			metadata->data_size = bson_iter_int64(&b_iter);
-			printf("j_adios_put_variable: data_size %d\n",metadata->data_size );
 		}
 		/* boolean */
 		else if(g_strcmp0(bson_iter_key(&b_iter),"is_value") == 0)
