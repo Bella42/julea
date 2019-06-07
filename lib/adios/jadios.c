@@ -307,6 +307,8 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 	bson_meta_data = bson_new();
 	var_metadata_to_bson(metadata, bson_meta_data);
 
+	printf("j_adios_put_variable: data_size %d\n",metadata->data_size );
+
 	meta_data_buf = g_memdup(bson_get_data(bson_meta_data), bson_meta_data->len);
 	names_buf = g_memdup(bson_get_data(bson_names), bson_names->len);
 
@@ -429,7 +431,7 @@ j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, void* 
 
 
 /**
- * Get all variable names from kv store for the passed namespace.
+ * Get all variable names from kv store for the passed namespace. If there are no variables in the kv store then count_names will return 0 (not an error code) and there will be no memory allocation for the parameters "names" and "types".
  *
  * NOTE: WILL BE DEPRECATED WHEN SMD BACKEND IS FINISHED!
  *
@@ -444,20 +446,32 @@ j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, 
 {
 	bson_t* bson_names;
 	bson_iter_t b_iter;
-	guint32 value_len= 0;
+	guint32 value_len = 0;
 
 	g_autoptr(JKV) kv_object = NULL;
+	gpointer names_buf = NULL;
 
 	JBatch* batch = j_batch_new(semantics);
+	// printf("-- JADIOS DEBUG PRINT: get_all_var_names_from_kv \n");
 
 	kv_object = j_kv_new("variable_names", name_space);
-	bson_names = bson_new();
 
-	value_len = strlen(name_space);
-	j_kv_get(kv_object, (void*) bson_names, &value_len, batch);	//FIXME
+	j_kv_get(kv_object, &names_buf, &value_len, batch);
 	j_batch_execute(batch);
 
+	if(value_len == 0)
+	{
+		// bson_names = bson_new();
+		printf("WARNING: The names key-value store is empty! \n");
+		*count_names = 0;
+	}
+	else
+	{
+		bson_names = bson_new_from_data(names_buf, value_len);
+	}
+
 	*count_names = bson_count_keys(bson_names);
+	printf("-- JADIOS DEBUG PRINT: count_names %d\n",*count_names );
 
 	*names = g_slice_alloc(*count_names * sizeof(char*));
 	*types = g_slice_alloc(*count_names * sizeof(int));
@@ -497,26 +511,39 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 	guint32 value_len = 0;
 
 	g_autoptr(JKV) kv_object = NULL;
+	gpointer names_buf = NULL;
 	batch = j_batch_new(semantics);
 
+	printf("-- JADIOS DEBUG PRINT: j_adios_get_var_metadata_from_kv \n");
 	string_metadata_kv = g_strdup_printf("variables_%s", name_space);
 	kv_object = j_kv_new(string_metadata_kv, var_name);
-	bson_metadata = bson_new();
+	// bson_metadata = bson_new();
 
-	value_len = strlen(var_name);
-	j_kv_get(kv_object,(void*) bson_metadata, &value_len, batch); //FIXME
+	// j_kv_get(kv_object,(void*) bson_metadata, &value_len, batch); //FIXME
+	j_kv_get(kv_object, &names_buf, &value_len, batch); //FIXME
 	j_batch_execute(batch);
 
+	printf("-- JADIOS DEBUG PRINT: 1 \n");
+	if(value_len == 0)
+	{
+		// bson_names = bson_new();
+		printf("WARNING: The variable key-value store is empty! \n");
+	}
+	else
+	{
+		bson_metadata = bson_new_from_data(names_buf, value_len);
+	}
+
+	printf("-- JADIOS DEBUG PRINT: 2 \n");
 	bson_iter_init(&b_iter, bson_metadata);
 
 	/* probably not very efficient */
 	while(bson_iter_next(&b_iter))
 	{
-
 		if(g_strcmp0(bson_iter_key(&b_iter),"shape_size") == 0)
 		{
 			metadata->shape_size = bson_iter_int64(&b_iter);
-			// printf("-- JADIOS DEBUG PRINT: shape_size = %ld \n", metadata->shape_size);
+			printf("-- JADIOS DEBUG PRINT: shape_size = %ld \n", metadata->shape_size);
 
 			if(metadata->shape_size > 0)
 			{
@@ -534,7 +561,7 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		else if(g_strcmp0(bson_iter_key(&b_iter),"start_size") == 0)
 		{
 			metadata->start_size = bson_iter_int64(&b_iter);
-			// printf("-- JADIOS DEBUG PRINT: start_size = %ld \n", metadata->start_size);
+			printf("-- JADIOS DEBUG PRINT: start_size = %ld \n", metadata->start_size);
 
 			if(metadata->start_size > 0)
 			{
@@ -552,18 +579,22 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		else if(g_strcmp0(bson_iter_key(&b_iter),"count_size") == 0)
 		{
 			metadata->count_size = bson_iter_int64(&b_iter);
-			// printf("-- JADIOS DEBUG PRINT: count_size = %ld \n", metadata->count_size);
+			printf("-- JADIOS DEBUG PRINT: count_size = %ld \n", metadata->count_size);
 
 			if(metadata->count_size > 0)
 			{
 				for(guint i = 0; i < metadata->count_size; i++)
 				{
+						printf("-- JADIOS DEBUG PRINT: 3.1 \n");
 					bson_iter_next(&b_iter);
 					key = g_strdup_printf("count_%d",i);
 					if(g_strcmp0(bson_iter_key(&b_iter),key) == 0)
 					{
+						printf("-- JADIOS DEBUG PRINT: 3.2 \n");
 						metadata->count[i] = bson_iter_int64(&b_iter);
+
 						// printf("-- JADIOS DEBUG PRINT: count[%d] = %ld \n",i, metadata->count[i]);
+						printf("-- JADIOS DEBUG PRINT: 3.3 \n");
 					}
 				}
 			}
@@ -639,7 +670,9 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		/* unsigned int */
 		else if(g_strcmp0(bson_iter_key(&b_iter),"data_size") == 0)
 		{
+			printf("-- JADIOS DEBUG PRINT: 4 \n");
 			metadata->data_size = bson_iter_int64(&b_iter);
+			printf("j_adios_put_variable: data_size %d\n",metadata->data_size );
 		}
 		/* boolean */
 		else if(g_strcmp0(bson_iter_key(&b_iter),"is_value") == 0)
