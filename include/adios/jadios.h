@@ -30,21 +30,67 @@
 
 G_BEGIN_DECLS
 
+// ADIOS version 2.3.1 TYPES
+// enum variable_type{
+// 	COMPOUND,
+// 	UNKNOWN,
+// 	STRING,
+// 	CHAR,
+// 	SIGNED_CHAR,
+// 	UNSIGNED_CHAR,
+// 	SHORT,
+// 	UNSIGNED_SHORT,
+// 	INT,
+// 	UNSIGNED_INT,
+// 	LONG_INT,
+// 	UNSIGNED_LONG_INT,
+// 	LONG_LONG_INT,
+// 	UNSIGNED_LONG_LONG_INT,
+// 	FLOAT,
+// 	DOUBLE,
+// 	LONG_DOUBLE,
+// 	FLOAT_COMPLEX,
+// 	DOUBLE_COMPLEX
+// };
+// typedef enum variable_type variable_type_2_3_1;
+
+
+// union value_type{
+// 	//compound?!
+// 	//unknown?!
+// 	// char *string; //TODO: needed?
+// 	char character;
+// 	signed char s_character;
+// 	unsigned char u_character;
+// 	short shorter;
+// 	unsigned short u_shorter;
+// 	int integer;
+// 	unsigned int u_integer;
+// 	long int l_integer;
+// 	unsigned long int ul_integer;
+// 	long long int ll_integer;
+// 	unsigned long long int ull_integer;
+// 	float real_float;
+// 	double real_double;
+// 	long double lreal_double;
+// 	// float complex float_complex;		//not yet implemented in ADIOS2
+// 	// double complex double_complex;	//not yet implemented in ADIOS2
+// };
+// typedef union value_type value_type_2_3_1;
+
+
+
+/* ADIOS Types in ADIOS2-2.4.0 */
 enum variable_type{
-	COMPOUND,
-	UNKNOWN,
 	STRING,
-	CHAR,
-	SIGNED_CHAR,
-	UNSIGNED_CHAR,
-	SHORT,
-	UNSIGNED_SHORT,
-	INT,
-	UNSIGNED_INT,
-	LONG_INT,
-	UNSIGNED_LONG_INT,
-	LONG_LONG_INT,
-	UNSIGNED_LONG_LONG_INT,
+	INT8,
+	UINT8,
+	INT16,
+	UINT16,
+	INT32,
+	UINT32,
+	INT64,
+	UINT64,
 	FLOAT,
 	DOUBLE,
 	LONG_DOUBLE,
@@ -54,20 +100,15 @@ enum variable_type{
 typedef enum variable_type variable_type;
 
 union value_type{
-	//compound?!
-	//unknown?!
-	// char *string; //TODO: needed?
-	char character;
-	signed char s_character;
-	unsigned char u_character;
-	short shorter;
-	unsigned short u_shorter;
-	int integer;
-	unsigned int u_integer;
-	long int l_integer;
-	unsigned long int ul_integer;
-	long long int ll_integer;
-	unsigned long long int ull_integer;
+	char *string; //TODO: needed?
+	int8_t integer_8;
+	uint8_t u_integer_8;
+	int16_t integer_16;
+	uint16_t u_integer_16;
+	int32_t integer_32;
+	uint32_t u_integer_32;
+	int64_t integer_64;
+	uint64_t u_integer_64;
 	float real_float;
 	double real_double;
 	long double lreal_double;
