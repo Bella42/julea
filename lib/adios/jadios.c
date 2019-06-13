@@ -280,22 +280,24 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 	kv_object_metadata = j_kv_new(string_metadata_kv, metadata->name);
 	kv_object_names = j_kv_new("variable_names", name_space);
 
-
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 1 \n");
-	j_kv_get(kv_object_names, names_buf, &value_len, batch_2);
+	j_kv_get(kv_object_names, &names_buf, &value_len, batch_2);
 	j_batch_execute(batch_2);
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 2  \n");
 
-	bson_names = bson_new_from_data(names_buf, value_len);
+	if(value_len == 0)
+	{
+		bson_names = bson_new();
+	}
+	else
+	{
+		bson_names = bson_new_from_data(names_buf, value_len);
+	}
 	g_free(names_buf);
 
 	/* check if variable name is already in kv store */
 	if(!bson_iter_init_find(&b_iter, bson_names, metadata->name))
 	{
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 3  \n");
 		printf("Init b_iter successfull \n");
 		bson_append_int32(bson_names, metadata->name,-1, metadata->var_type);
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 4  \n");
 	}
 	else
 	{
@@ -304,13 +306,13 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 
 	bson_meta_data = bson_new();
 	var_metadata_to_bson(metadata, bson_meta_data);
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 5  \n");
 
-	meta_data_buf = g_memdup(bson_meta_data, bson_meta_data->len);
-	names_buf = g_memdup(bson_names, bson_names->len);
+	printf("j_adios_put_variable: data_size %d\n",metadata->data_size );
+
+	meta_data_buf = g_memdup(bson_get_data(bson_meta_data), bson_meta_data->len);
+	names_buf = g_memdup(bson_get_data(bson_names), bson_names->len);
 
 	j_kv_put(kv_object_metadata, meta_data_buf, bson_meta_data->len, g_free, batch);
-	printf("-- JADIOS DEBUG PRINT: PUT VARIABLE REACHED 6  \n");
 	j_kv_put(kv_object_names, names_buf, bson_names->len, g_free, batch);
 	//j_smd_put_metadata(name_space, metadata, batch); //TODO use SMD backend
 
@@ -429,7 +431,7 @@ j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, void* 
 
 
 /**
- * Get all variable names from kv store for the passed namespace.
+ * Get all variable names from kv store for the passed namespace. If there are no variables in the kv store then count_names will return 0 (not an error code) and there will be no memory allocation for the parameters "names" and "types".
  *
  * NOTE: WILL BE DEPRECATED WHEN SMD BACKEND IS FINISHED!
  *
@@ -444,20 +446,32 @@ j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, 
 {
 	bson_t* bson_names;
 	bson_iter_t b_iter;
-	guint32 value_len= 0;
+	guint32 value_len = 0;
 
 	g_autoptr(JKV) kv_object = NULL;
+	gpointer names_buf = NULL;
 
 	JBatch* batch = j_batch_new(semantics);
+	// printf("-- JADIOS DEBUG PRINT: get_all_var_names_from_kv \n");
 
 	kv_object = j_kv_new("variable_names", name_space);
-	bson_names = bson_new();
 
-	value_len = strlen(name_space);
-	j_kv_get(kv_object, (void*) bson_names, &value_len, batch);	//FIXME
+	j_kv_get(kv_object, &names_buf, &value_len, batch);
 	j_batch_execute(batch);
 
+	if(value_len == 0)
+	{
+		// bson_names = bson_new();
+		printf("WARNING: The names key-value store is empty! \n");
+		*count_names = 0;
+	}
+	else
+	{
+		bson_names = bson_new_from_data(names_buf, value_len);
+	}
+
 	*count_names = bson_count_keys(bson_names);
+	// printf("-- JADIOS DEBUG PRINT: count_names %d\n",*count_names );
 
 	*names = g_slice_alloc(*count_names * sizeof(char*));
 	*types = g_slice_alloc(*count_names * sizeof(int));
@@ -471,8 +485,8 @@ j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, 
 		}
 		(*names)[i] = g_strdup(bson_iter_key(&b_iter));
 		(*types)[i] = bson_iter_int32(&b_iter);
-		printf("-- JADIOS DEBUG PRINT: get_all_var_names_from_kv DEBUG PRINT: %s\n", (*names)[i]);
-		printf("-- JADIOS DEBUG PRINT: types DEBUG PRINT: %d\n", (*types)[i]);
+		// printf("-- JADIOS DEBUG PRINT: get_all_var_names_from_kv DEBUG PRINT: %s\n", (*names)[i]);
+		// printf("-- JADIOS DEBUG PRINT: types DEBUG PRINT: %d\n", (*types)[i]);
 	}
 }
 
@@ -497,22 +511,32 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 	guint32 value_len = 0;
 
 	g_autoptr(JKV) kv_object = NULL;
+	gpointer names_buf = NULL;
 	batch = j_batch_new(semantics);
 
 	string_metadata_kv = g_strdup_printf("variables_%s", name_space);
 	kv_object = j_kv_new(string_metadata_kv, var_name);
-	bson_metadata = bson_new();
+	// bson_metadata = bson_new();
 
-	value_len = strlen(var_name);
-	j_kv_get(kv_object,(void*) bson_metadata, &value_len, batch); //FIXME
+	// j_kv_get(kv_object,(void*) bson_metadata, &value_len, batch); //FIXME
+	j_kv_get(kv_object, &names_buf, &value_len, batch); //FIXME
 	j_batch_execute(batch);
+
+	if(value_len == 0)
+	{
+		// bson_names = bson_new();
+		printf("WARNING: The variable key-value store is empty! \n");
+	}
+	else
+	{
+		bson_metadata = bson_new_from_data(names_buf, value_len);
+	}
 
 	bson_iter_init(&b_iter, bson_metadata);
 
 	/* probably not very efficient */
 	while(bson_iter_next(&b_iter))
 	{
-
 		if(g_strcmp0(bson_iter_key(&b_iter),"shape_size") == 0)
 		{
 			metadata->shape_size = bson_iter_int64(&b_iter);
