@@ -106,24 +106,16 @@ var_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	assert(bson_append_bool(bson_meta_data, "is_first_streaming_step", -1, metadata->is_first_streaming_step));
 
 	/* now comes the part for "min_value" of type T in C++ */
-	// if(metadata->var_type == COMPOUND) FIXME data types
-	// {
-	// 	//TODO: implement
-	// }
-	// else if(metadata->var_type == UNKNOWN)
-	// {
-	// 	//TODO: implement
-	// }
-	// else if(metadata->var_type == STRING)
-	// {
-	// 	//TODO: implement
-	// }
+	if(metadata->var_type == STRING) //FIXME data types
+	{
+		//TODO: implement
+	}
 	else if(metadata->var_type == INT32)
 	{
-		assert(bson_append_int32(bson_meta_data, "min_value", -1, metadata->min_value.integer));
-		assert(bson_append_int32(bson_meta_data, "max_value", -1, metadata->max_value.integer));
-		assert(bson_append_int32(bson_meta_data, "curr_value", -1, metadata->curr_value.integer));
-	// }
+		assert(bson_append_int32(bson_meta_data, "min_value", -1, metadata->min_value.integer_32));
+		assert(bson_append_int32(bson_meta_data, "max_value", -1, metadata->max_value.integer_32));
+		assert(bson_append_int32(bson_meta_data, "curr_value", -1, metadata->curr_value.integer_32));
+	}
 	// else if(metadata->var_type == SIGNED_CHAR)
 	// {
 	// 	//TODO: implement
@@ -142,9 +134,9 @@ var_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 	// }
 	else if(metadata->var_type == INT64)
 	{
-		assert(bson_append_int64(bson_meta_data, "min_value", -1, metadata->min_value.integer));
-		assert(bson_append_int64(bson_meta_data, "max_value", -1, metadata->max_value.integer));
-		assert(bson_append_int64(bson_meta_data, "curr_value", -1, metadata->curr_value.integer));
+		assert(bson_append_int64(bson_meta_data, "min_value", -1, metadata->min_value.integer_64));
+		assert(bson_append_int64(bson_meta_data, "max_value", -1, metadata->max_value.integer_64));
+		assert(bson_append_int64(bson_meta_data, "curr_value", -1, metadata->curr_value.integer_64));
 	}
 	// else if(metadata->var_type == UNSIGNED_INT)
 	// {
@@ -699,16 +691,16 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		{
 			if(metadata->var_type == INT32)
 			{
-				metadata->min_value.character = bson_iter_int32(&b_iter);
+				metadata->min_value.integer_32 = bson_iter_int32(&b_iter);
 			}
 			else if(metadata->var_type == INT64)
 			{
-				metadata->min_value.integer = bson_iter_int64(&b_iter);
+				metadata->min_value.integer_64 = bson_iter_int64(&b_iter);
 			}
-			else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
-			{
-				bson_iter_decimal128(&b_iter, (bson_decimal128_t*) metadata->min_value.ull_integer);
-			}
+			// else if(metadata->var_type == UNSIGNED_LONG_LONG_INT) //FIXME data type
+			// {
+			// 	bson_iter_decimal128(&b_iter, (bson_decimal128_t*) metadata->min_value.ull_integer);
+			// }
 			else if(metadata->var_type == FLOAT)
 			{
 				metadata->min_value.real_float = bson_iter_double(&b_iter);
@@ -722,16 +714,16 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		{
 			if(metadata->var_type == INT32)
 			{
-				metadata->max_value.character = bson_iter_int32(&b_iter);
+				metadata->max_value.integer_32 = bson_iter_int32(&b_iter);
 			}
 			else if(metadata->var_type == INT64)
 			{
-				metadata->max_value.integer = bson_iter_int64(&b_iter);
+				metadata->max_value.integer_64 = bson_iter_int64(&b_iter);
 			}
-			else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
-			{
-				bson_iter_decimal128(&b_iter,(bson_decimal128_t*) metadata->max_value.ull_integer);
-			}
+			// else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
+			// {
+			// 	bson_iter_decimal128(&b_iter,(bson_decimal128_t*) metadata->max_value.ull_integer);
+			// }
 			else if(metadata->var_type == FLOAT)
 			{
 				metadata->max_value.real_float = (float) bson_iter_double(&b_iter);
@@ -745,16 +737,16 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 		{
 			if(metadata->var_type == INT32)
 			{
-				metadata->curr_value.character = bson_iter_int32(&b_iter);
+				metadata->curr_value.integer_32 = bson_iter_int32(&b_iter);
 			}
 			else if(metadata->var_type == INT64)
 			{
-				metadata->curr_value.integer = bson_iter_int64(&b_iter);
+				metadata->curr_value.integer_64 = bson_iter_int64(&b_iter);
 			}
-			else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
-			{
-				bson_iter_decimal128(&b_iter,(bson_decimal128_t*) metadata->curr_value.ull_integer);
-			}
+			// else if(metadata->var_type == UNSIGNED_LONG_LONG_INT)
+			// {
+			// 	bson_iter_decimal128(&b_iter,(bson_decimal128_t*) metadata->curr_value.ull_integer);
+			// }
 			else if(metadata->var_type == FLOAT)
 			{
 				metadata->curr_value.real_float = (float) bson_iter_double(&b_iter);

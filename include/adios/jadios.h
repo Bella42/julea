@@ -99,6 +99,31 @@ enum variable_type{
 };
 typedef enum variable_type variable_type;
 
+// enum variable_type
+// {
+//     type_unknown = -1, //!< type_unknown
+//     type_byte = 0,     //!< type_byte
+//     type_short = 1,    //!< type_short
+//     type_integer = 2,  //!< type_integer
+//     type_long = 4,     //!< type_long
+
+//     type_unsigned_byte = 50,    //!< type_unsigned_byte
+//     type_unsigned_short = 51,   //!< type_unsigned_short
+//     type_unsigned_integer = 52, //!< type_unsigned_integer
+//     type_unsigned_long = 54,    //!< type_unsigned_long
+
+//     type_real = 5,        //!< type_real or float
+//     type_double = 6,      //!< type_double
+//     type_long_double = 7, //!< type_long_double
+
+//     type_string = 9,          //!< type_string
+//     type_complex = 10,        //!< type_complex
+//     type_double_complex = 11, //!< type_double_complex
+//     type_string_array = 12,   //!< type_string_array
+// };
+// typedef enum variable_type variable_type;
+
+
 union value_type{
 	char *string; //TODO: needed?
 	int8_t integer_8;
