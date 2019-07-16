@@ -30,11 +30,11 @@
 
 G_BEGIN_DECLS
 
-struct JuleaInfo{
-	JSemantics* semantics;
-	char* name_space;
-};
-typedef struct JuleaInfo JuleaInfo;
+// struct JuleaInfo{
+// 	JSemantics* semantics;
+// 	char* name_space;
+// };
+// typedef struct JuleaInfo JuleaInfo;
 
 // void j_adios_init(JuleaInfo* julea_info); //DESIGN: param needed?
 // void j_adios_finish(void);
