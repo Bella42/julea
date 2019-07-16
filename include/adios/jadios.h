@@ -80,24 +80,24 @@ G_BEGIN_DECLS
 
 
 
-/* ADIOS Types in ADIOS2-2.4.0 */
-enum variable_type{
-	STRING,
-	INT8,
-	UINT8,
-	INT16,
-	UINT16,
-	INT32,
-	UINT32,
-	INT64,
-	UINT64,
-	FLOAT,
-	DOUBLE,
-	LONG_DOUBLE,
-	FLOAT_COMPLEX,
-	DOUBLE_COMPLEX
-};
-typedef enum variable_type variable_type;
+// /* ADIOS Types in ADIOS2-2.4.0 */
+// enum variable_type{
+// 	STRING,
+// 	INT8,
+// 	UINT8,
+// 	INT16,
+// 	UINT16,
+// 	INT32,
+// 	UINT32,
+// 	INT64,
+// 	UINT64,
+// 	FLOAT,
+// 	DOUBLE,
+// 	LONG_DOUBLE,
+// 	FLOAT_COMPLEX,
+// 	DOUBLE_COMPLEX
+// };
+// typedef enum variable_type variable_type;
 
 // enum variable_type
 // {
@@ -124,23 +124,23 @@ typedef enum variable_type variable_type;
 // typedef enum variable_type variable_type;
 
 
-union value_type{
-	char *string; //TODO: needed?
-	int8_t integer_8;
-	uint8_t u_integer_8;
-	int16_t integer_16;
-	uint16_t u_integer_16;
-	int32_t integer_32;
-	uint32_t u_integer_32;
-	int64_t integer_64;
-	uint64_t u_integer_64;
-	float real_float;
-	double real_double;
-	long double lreal_double;
-	// float complex float_complex;		//not yet implemented in ADIOS2
-	// double complex double_complex;	//not yet implemented in ADIOS2
-};
-typedef union value_type value_type;
+// union value_type{
+// 	char *string; //TODO: needed?
+// 	int8_t integer_8;
+// 	uint8_t u_integer_8;
+// 	int16_t integer_16;
+// 	uint16_t u_integer_16;
+// 	int32_t integer_32;
+// 	uint32_t u_integer_32;
+// 	int64_t integer_64;
+// 	uint64_t u_integer_64;
+// 	float real_float;
+// 	double real_double;
+// 	long double lreal_double;
+// 	// float complex float_complex;		//not yet implemented in ADIOS2
+// 	// double complex double_complex;	//not yet implemented in ADIOS2
+// };
+// typedef union value_type value_type;
 
 /**
  * Metadata information to be stored in kv store or structured metadata backend.
@@ -148,91 +148,91 @@ typedef union value_type value_type;
  * TODO: VariableBase.h members are stored in JULEA but are currently not used in ADIOS.
  *
  */
-struct Metadata{
-	char* name;
+// struct Metadata{
+// 	char* name;
 
-	unsigned long* shape;
-	unsigned long* start;
-	unsigned long* count;
-	unsigned long* memory_start; //TODO
-	unsigned long* memory_count; //TODO
+// 	unsigned long* shape;
+// 	unsigned long* start;
+// 	unsigned long* count;
+// 	unsigned long* memory_start; //TODO
+// 	unsigned long* memory_count; //TODO
 
 
-	unsigned long shape_size;
-	unsigned long start_size;
-	unsigned long count_size;
-	unsigned long memory_start_size; //TODO
-	unsigned long memory_count_size; //TODO
+// 	unsigned long shape_size;
+// 	unsigned long start_size;
+// 	unsigned long count_size;
+// 	unsigned long memory_start_size; //TODO
+// 	unsigned long memory_count_size; //TODO
 
-	size_t steps_start;
-	size_t steps_count;
-	size_t block_id;				//TODO
-    size_t index_start; 			//VariableBase.h TODO
-    size_t element_size; 			//VariableBase.h TODO
-    size_t available_steps_start; 	//VariableBase.h TODO
-    size_t available_steps_count;	//VariableBase.h TODO
+// 	size_t steps_start;
+// 	size_t steps_count;
+// 	size_t block_id;				//TODO
+//     size_t index_start; 			//VariableBase.h TODO
+//     size_t element_size; 			//VariableBase.h TODO
+//     size_t available_steps_start; 	//VariableBase.h TODO
+//     size_t available_steps_count;	//VariableBase.h TODO
 
-	variable_type var_type;
+// 	variable_type var_type;
 
-	value_type min_value;
-	value_type max_value;
-	value_type curr_value;
+// 	value_type min_value;
+// 	value_type max_value;
+// 	value_type curr_value;
 
-	unsigned int sizeof_var_type;	//store the actual size of the variable type
-	unsigned int data_size;
-	// unsigned int deferred_counter; //VariableBase.h TODO: implement!
+// 	unsigned int sizeof_var_type;	//store the actual size of the variable type
+// 	unsigned int data_size;
+// 	// unsigned int deferred_counter; //VariableBase.h TODO: implement!
 
-	bool is_value;
-	bool is_single_value;			//VariableBase.h TODO
-	bool is_constant_dims; 			//VariableBase.h TODO? //protected
-    bool is_read_as_joined; 		//VariableBase.h TODO
-    bool is_read_as_local_value; 	//VariableBase.h TODO
-    bool is_random_access; 			//VariableBase.h TODO
-    bool is_first_streaming_step; 	//VariableBase.h TODO
+// 	bool is_value;
+// 	bool is_single_value;			//VariableBase.h TODO
+// 	bool is_constant_dims; 			//VariableBase.h TODO? //protected
+//     bool is_read_as_joined; 		//VariableBase.h TODO
+//     bool is_read_as_local_value; 	//VariableBase.h TODO
+//     bool is_random_access; 			//VariableBase.h TODO
+//     bool is_first_streaming_step; 	//VariableBase.h TODO
 
-    //TODO: ShapeID m_ShapeID; see shape types in ADIOSTypes.h
-    //TODO: Operations Map
-    // size_t m_IndexStart = 0; TODO: needed?
-};
-typedef struct Metadata Metadata;
+//     //TODO: ShapeID m_ShapeID; see shape types in ADIOSTypes.h
+//     //TODO: Operations Map
+//     // size_t m_IndexStart = 0; TODO: needed?
+// };
+// typedef struct Metadata Metadata;
 
-struct AttributeMetadata
-{
-	char* name;
-	variable_type attr_type;
-	size_t number_elements;
-	bool is_single_value;
-	guint data_size;
-};
-typedef struct AttributeMetadata AttributeMetadata;
+// struct AttributeMetadata
+// {
+// 	char* name;
+// 	variable_type attr_type;
+// 	size_t number_elements;
+// 	bool is_single_value;
+// 	guint data_size;
+// };
+// typedef struct AttributeMetadata AttributeMetadata;
 
-struct JuleaInfo{
-	JSemantics* semantics;
-	char* name_space;
-};
-typedef struct JuleaInfo JuleaInfo;
+// struct JuleaInfo{
+// 	JSemantics* semantics;
+// 	char* name_space;
+// };
+// typedef struct JuleaInfo JuleaInfo;
 
-void j_adios_init(JuleaInfo* julea_info); //DESIGN: param needed?
-void j_adios_finish(void);
+// void j_adios_init(JuleaInfo* julea_info); //DESIGN: param needed?
+// void j_adios_finish(void);
 
 /* performs data put AND metadata put*/
-void j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch);
-void j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, void* data_pointer, JBatch* batch, gboolean use_batch);
+// void j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, JBatch* batch, gboolean use_batch);
+// void j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, void* data_pointer, JBatch* batch, gboolean use_batch);
 
-/* get data from object store*/
-void j_adios_get_var_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);
-void j_adios_get_attr_data(char* name_space, char* attribute_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);
+// /* get data from object store*/
+// void j_adios_get_var_data(char* name_space, char* variable_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);
+// void j_adios_get_attr_data(char* name_space, char* attribute_name, unsigned int length, void* data_pointer, JBatch* batch, gboolean use_batch);
 
-/* get metadata from kv store; hopefully soon from SMD backend*/
-void j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, unsigned int* count_names, JSemantics* semantics);
-void j_adios_get_var_metadata_from_kv(char* name_space, char* var_name, Metadata* metadata, JSemantics* semantics);
+// /* get metadata from kv store; hopefully soon from SMD backend*/
+// void j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, unsigned int* count_names, JSemantics* semantics);
+// void j_adios_get_var_metadata_from_kv(char* name_space, char* var_name, Metadata* metadata, JSemantics* semantics);
 
-/* get attributes from kv store; hopefully soon from SMD backend */
-void j_adios_get_all_attr_names_from_kv(char* name_space, char*** names, int** types, unsigned int count_names, JSemantics* semantics);
-void j_adios_get_attr_metadata_from_kv(char* name_space, char* var_name, AttributeMetadata* attr_metadata, JSemantics* semantics);
+// /* get attributes from kv store; hopefully soon from SMD backend */
+// void j_adios_get_all_attr_names_from_kv(char* name_space, char*** names, int** types, unsigned int count_names, JSemantics* semantics);
+// void j_adios_get_attr_metadata_from_kv(char* name_space, char* var_name, AttributeMetadata* attr_metadata, JSemantics* semantics);
 
-void j_adios_delete_variable(char* name_space, char* var_name, JBatch* batch);
-void j_adios_delete_attribute(char* name_space, char* attr_name, JBatch* batch);
+// void j_adios_delete_variable(char* name_space, char* var_name, JBatch* batch);
+// void j_adios_delete_attribute(char* name_space, char* attr_name, JBatch* batch);
 
 G_END_DECLS
 
