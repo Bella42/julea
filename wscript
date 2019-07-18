@@ -67,21 +67,30 @@ def get_rpath(ctx):
 	if not ctx.env.JULEA_DEBUG:
 		return None
 
-	return ['{0}/lib'.format(os.path.abspath(out))]
+	return ['{0}/lib'.format(os.path.abspath(ctx.out_dir))]
 
 
-def check_and_add_cflags(ctx, flags, mandatory=True):
+def check_and_add_flags(ctx, flags, mandatory=True, type=['cflags']):
 	if not isinstance(flags, list):
 		flags = [flags]
 
 	for flag in flags:
-		ret = ctx.check_cc(
-			cflags=flag,
-			mandatory=mandatory
-		)
+		args = {}
+
+		if 'cflags' in type:
+			args['cflags'] = flag
+
+		if 'ldflags' in type:
+			args['ldflags'] = flag
+
+		ret = ctx.check_cc(mandatory=mandatory, **args)
 
 		if ret:
-			ctx.env.CFLAGS += [flag]
+			if 'cflags' in type:
+				ctx.env.CFLAGS += [flag]
+
+			if 'ldflags' in type:
+				ctx.env.LDFLAGS += [flag]
 
 
 def get_bin(prefixes, bin):
@@ -131,6 +140,7 @@ def options(ctx):
 
 	ctx.add_option('--debug', action='store_true', default=False, help='Enable debug mode')
 	ctx.add_option('--sanitize', action='store_true', default=False, help='Enable sanitize mode')
+	ctx.add_option('--coverage', action='store_true', default=False, help='Enable coverage analysis')
 
 	ctx.add_option('--glib', action='store', default=None, help='GLib prefix')
 	ctx.add_option('--leveldb', action='store', default=None, help='LevelDB prefix')
@@ -150,9 +160,9 @@ def configure(ctx):
 
 	ctx.env.JULEA_DEBUG = ctx.options.debug
 
-	check_and_add_cflags(ctx, '-std=c11')
-	check_and_add_cflags(ctx, '-fdiagnostics-color', False)
-	check_and_add_cflags(ctx, ['-Wpedantic', '-Wall', '-Wextra'])
+	check_and_add_flags(ctx, '-std=c11')
+	check_and_add_flags(ctx, '-fdiagnostics-color', False)
+	check_and_add_flags(ctx, ['-Wpedantic', '-Wall', '-Wextra'])
 	ctx.define('_POSIX_C_SOURCE', '200809L', quote=False)
 
 	ctx.check_large_file()
@@ -197,12 +207,11 @@ def configure(ctx):
 			mandatory=False
 		)
 
-	# FIXME check for VOL support
 	ctx.env.JULEA_HDF = \
 		check_cc_rpath(
 			ctx,
 			ctx.options.hdf,
-			header_name='hdf5.h',
+			header_name=['hdf5.h', 'H5PLextern.h'],
 			lib='hdf5',
 			uselib_store='HDF5',
 			define_name='HAVE_HDF5',
@@ -305,22 +314,15 @@ def configure(ctx):
 	)
 
 	if ctx.options.sanitize:
-		ctx.check_cc(
-			cflags='-fsanitize=address',
-			ldflags='-fsanitize=address',
-			uselib_store='ASAN',
-			mandatory=False
-		)
+		check_and_add_flags(ctx, '-fsanitize=address', False, ['cflags', 'ldflags'])
+		# FIXME enable ubsan?
+		#check_and_add_flags(ctx, '-fsanitize=undefined', False, ['cflags', 'ldflags'])
 
-		ctx.check_cc(
-			cflags='-fsanitize=undefined',
-			ldflags='-fsanitize=undefined',
-			uselib_store='UBSAN',
-			mandatory=False
-		)
+	if ctx.options.coverage:
+		check_and_add_flags(ctx, '--coverage', True, ['cflags', 'ldflags'])
 
 	if ctx.options.debug:
-		check_and_add_cflags(ctx, [
+		check_and_add_flags(ctx, [
 			'-Waggregate-return',
 			'-Wcast-align',
 			'-Wcast-qual',
@@ -351,13 +353,13 @@ def configure(ctx):
 			'-Wuninitialized',
 			'-Wwrite-strings'
 		])
-		check_and_add_cflags(ctx, '-ggdb')
+		check_and_add_flags(ctx, '-ggdb')
 
 		ctx.define('G_DISABLE_DEPRECATED', 1)
 		ctx.define('GLIB_VERSION_MIN_REQUIRED', 'GLIB_VERSION_{0}'.format(glib_version.replace('.', '_')), quote=False)
 		ctx.define('GLIB_VERSION_MAX_ALLOWED', 'GLIB_VERSION_{0}'.format(glib_version.replace('.', '_')), quote=False)
 	else:
-		check_and_add_cflags(ctx, '-O2')
+		check_and_add_flags(ctx, '-O2')
 
 	if ctx.options.debug:
 		ctx.define('JULEA_DEBUG', 1)
@@ -365,8 +367,9 @@ def configure(ctx):
 	backend_paths = []
 
 	if ctx.options.debug:
-		# Context.out_dir is empty after the first configure
-		backend_path_build = '{0}/backend'.format(os.path.abspath(out))
+		# ctx.out_dir is not available yet
+		out_dir = ctx.options.out or out
+		backend_path_build = '{0}/backend'.format(os.path.abspath(out_dir))
 		ctx.define('JULEA_BACKEND_PATH_BUILD', backend_path_build)
 		backend_paths.append(backend_path_build)
 
@@ -384,7 +387,7 @@ def build(ctx):
 	include_dir = ctx.path.find_dir('include')
 	ctx.install_files('${INCLUDEDIR}/julea', include_dir.ant_glob('**/*.h', excl='**/*-internal.h'), cwd=include_dir, relative_trick=True)
 
-	use_julea_core = ['M', 'GLIB', 'ASAN']  # 'UBSAN'
+	use_julea_core = ['M', 'GLIB']
 	use_julea_lib = use_julea_core + ['GIO', 'GOBJECT', 'LIBBSON', 'OTF']
 	use_julea_backend = use_julea_core + ['GMODULE']
 	use_julea_object = use_julea_core + ['lib/julea', 'lib/julea-object']
@@ -502,11 +505,12 @@ def build(ctx):
 
 		if backend == 'leveldb':
 			use_extra = ['LEVELDB']
-			# FIXME leveldb bug, https://github.com/google/leveldb/pull/365
+			# leveldb bug (will be fixed in 1.23)
+			# https://github.com/google/leveldb/pull/365
 			cflags = ['-Wno-strict-prototypes']
 		elif backend == 'lmdb':
 			use_extra = ['LMDB']
-			# FIXME lmdb bug
+			# lmdb bug
 			cflags = ['-Wno-discarded-qualifiers']
 		elif backend == 'mongodb':
 			use_extra = ['LIBMONGOC']

@@ -59,7 +59,7 @@ j_collection_iterator_new (void)
 	JCollectionIterator* iterator;
 
 	iterator = g_slice_new(JCollectionIterator);
-	iterator->iterator = j_kv_iterator_new(0, "collections", NULL);
+	iterator->iterator = j_kv_iterator_new("collections", NULL);
 
 	return iterator;
 }
@@ -117,7 +117,7 @@ j_collection_iterator_get (JCollectionIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	value = j_kv_iterator_get(iterator->iterator, &len);
+	j_kv_iterator_get(iterator->iterator, &value, &len);
 	bson_init_static(tmp, value, len);
 	collection = j_collection_new_from_bson(tmp);
 

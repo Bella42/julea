@@ -68,7 +68,7 @@ j_item_iterator_new (JCollection* collection)
 
 	iterator = g_slice_new(JItemIterator);
 	iterator->collection = j_collection_ref(collection);
-	iterator->iterator = j_kv_iterator_new(0, "items", prefix);
+	iterator->iterator = j_kv_iterator_new("items", prefix);
 
 	return iterator;
 }
@@ -127,7 +127,7 @@ j_item_iterator_get (JItemIterator* iterator)
 
 	g_return_val_if_fail(iterator != NULL, NULL);
 
-	value = j_kv_iterator_get(iterator->iterator, &len);
+	j_kv_iterator_get(iterator->iterator, &value, &len);
 	bson_init_static(tmp, value, len);
 	item = j_item_new_from_bson(iterator->collection, tmp);
 

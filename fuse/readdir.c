@@ -43,7 +43,7 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 		prefix = g_strdup_printf("%s/", path);
 	}
 
-	it = j_kv_iterator_new(0, "posix", prefix);
+	it = j_kv_iterator_new("posix", prefix);
 
 	while (j_kv_iterator_next(it))
 	{
@@ -52,7 +52,7 @@ jfs_readdir (char const* path, void* buf, fuse_fill_dir_t filler, off_t offset, 
 		bson_t tmp[1];
 		bson_iter_t iter;
 
-		value = j_kv_iterator_get(it, &len);
+		j_kv_iterator_get(it, &value, &len);
 		bson_init_static(tmp, value, len);
 
 		if (bson_iter_init_find(&iter, tmp, "name") && bson_iter_type(&iter) == BSON_TYPE_UTF8)

@@ -22,7 +22,6 @@
 #include <gmodule.h>
 
 #include <julea.h>
-#include <julea-internal.h>
 
 static
 gboolean
@@ -113,12 +112,13 @@ backend_get_by_prefix (gchar const* namespace, gchar const* prefix, gpointer* da
 
 static
 gboolean
-backend_iterate (gpointer data, gconstpointer* value, guint32* len)
+backend_iterate (gpointer data, gchar const** key, gconstpointer* value, guint32* len)
 {
 	g_return_val_if_fail(data != NULL, FALSE);
 	g_return_val_if_fail(value != NULL, FALSE);
 	g_return_val_if_fail(len != NULL, FALSE);
 
+	*key = "";
 	*value = "";
 	*len = 1;
 
