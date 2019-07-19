@@ -49,7 +49,11 @@ var_metadata_to_bson(Metadata* metadata, bson_t* bson_meta_data)
 {
 	gchar* key;
 
+	printf("bson_meta_data->len %d\n",bson_meta_data->len );
 	assert(bson_append_int64(bson_meta_data, "shape_size", -1, metadata->shape_size));
+	printf("bson_meta_data->len %d\n",bson_meta_data->len );
+	assert(bson_append_int64(bson_meta_data, "shape_size", -1, metadata->shape_size));
+	printf("bson_meta_data->len %d\n",bson_meta_data->len );
 	for(guint i = 0; i < metadata->shape_size; i++)
 	{
 		key = g_strdup_printf("shape_%d",i);
@@ -326,6 +330,14 @@ j_adios_put_variable(char* name_space, Metadata* metadata, void* data_pointer, J
 	g_free(string_metadata_kv);
 	g_free(string_data_object);
 
+	j_kv_unref(kv_object_names);
+    j_kv_unref(kv_object_metadata);
+    j_object_unref(data_object);
+    j_batch_unref(batch_2);
+    bson_destroy(bson_names);
+    bson_destroy(bson_meta_data);
+
+
 	printf("---* Julea Adios Client: Put Variable \n");
 }
 
@@ -417,7 +429,12 @@ j_adios_put_attribute(char* name_space, AttributeMetadata* attr_metadata, void* 
 
 	g_free(string_metadata_kv);
 	g_free(string_data_object);
-
+	j_kv_unref(kv_object_metadata);
+    j_kv_unref(kv_object_names);
+    j_object_unref(data_object);
+    j_batch_unref(batch_2);
+    bson_destroy(bson_names);
+    bson_destroy(bson_meta_data);
 	printf("---* Julea Adios Client: Put Attribute \n");
 }
 
@@ -480,6 +497,8 @@ j_adios_get_all_var_names_from_kv(char* name_space, char*** names, int** types, 
 		// printf("-- JADIOS DEBUG PRINT: get_all_var_names_from_kv DEBUG PRINT: %s\n", (*names)[i]);
 		// printf("-- JADIOS DEBUG PRINT: types DEBUG PRINT: %d\n", (*types)[i]);
 	}
+	j_kv_unref(kv_object);
+    j_batch_unref(batch);
 }
 
 /**
@@ -768,6 +787,12 @@ j_adios_get_var_metadata_from_kv(char* name_space, char *var_name, Metadata* met
 
 	g_free(string_metadata_kv);
 	g_free(key);
+	if(value_len > 0)
+    {
+    	// bson_destroy(&bson_metadata); //FIXME
+    }
+    j_kv_unref(kv_object);
+    j_batch_unref(batch);
 	printf("---* Julea Adios Client: Get Variable Metadata \n");
 }
 
@@ -813,6 +838,12 @@ j_adios_get_all_attr_names_from_kv(char* name_space, char*** names, int** types,
 		(*names)[i] = g_strdup(bson_iter_key(b_iter));
 		(*types)[i] = bson_iter_int32(b_iter);
 	}
+	j_kv_unref(kv_object);
+    if(value_len > 0)
+    {
+    	bson_destroy(bson_names);
+    }
+    j_batch_unref(batch);
 }
 
 
@@ -871,6 +902,9 @@ j_adios_get_attr_metadata_from_kv(char* name_space, char* attr_name, AttributeMe
 	}
 
 	g_free(string_metadata_kv);
+	j_kv_unref(kv_object);
+    j_batch_unref(batch);
+    bson_destroy(&bson_metadata);
 	printf("---* Julea Adios Client: Get Attribute Metadata \n");
 }
 
@@ -912,7 +946,8 @@ j_adios_get_var_data(char* name_space, char* variable_name, unsigned int length,
 		printf("WARNING: only %ld bytes read instead of %d bytes! \n",bytes_read, length);
 	}
 
-	free(string_data_object);
+	g_free(string_data_object);
+	j_object_unref(data_object);
 }
 
 /**
@@ -951,7 +986,8 @@ j_adios_get_attr_data(char* name_space, char* attribute_name, unsigned int lengt
 		printf("---* Julea Adios Client: Batch execute \n");
 	}
 
-	free(string_data_object);
+	g_free(string_data_object);
+	j_object_unref(data_object);
 }
 
 /**
@@ -986,6 +1022,10 @@ j_adios_delete_variable(char* name_space, char* var_name, JBatch* batch)
 
 	g_free(string_metadata_kv);
 	g_free(string_data_object);
+	j_kv_unref(kv_object_metadata);
+    j_kv_unref(kv_object_names);
+    j_object_unref(data_object);
+
 
 	printf("---* Julea Adios Client: Delete variable %s \n", var_name);
 }
@@ -1022,6 +1062,9 @@ j_adios_delete_attribute(char* name_space, char* var_name, JBatch* batch)
 
 	g_free(string_metadata_kv);
 	g_free(string_data_object);
+	j_kv_unref(kv_object_metadata);
+    j_kv_unref(kv_object_names);
+    j_object_unref(data_object);
 
 	printf("---* Julea Adios Client: Delete attribute %s \n", var_name);
 }
