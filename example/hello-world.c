@@ -55,16 +55,16 @@ int object_store_write()
 	j_object_create(object, batch);
 
 	// Writes data for object. Afterwards bytes_written contains the 
-	// number of bytes that were actuaylly written
+	// number of bytes that were actually written
 	j_object_write(object, data, data_size, 0, &bytes_written, batch);
 	
 	// Executes the object creation and the object write in one batch.
-	// returns false if an error occured 
+	// returns false if an error occurred 
 	is_executed = j_batch_execute(batch);
 
 	if (!is_executed)
 	{
-		printf("An error occured when writing the object! \n");
+		printf("An error occurred when writing the object! \n");
 	}
 	else
 	{
