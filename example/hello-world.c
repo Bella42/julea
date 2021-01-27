@@ -38,7 +38,7 @@ int object_store_write()
 	gchar const* name_space = "object-namespace";
 	gchar const* name = "object-1";
 	
-	// in C a string needs to be terminated by a null character '\0' which needs place.
+	// in C a string needs to be terminated by a null character '\0' which needs space.
 	// therefore the data_size is the length of the string (strlen) plus 1.
 	guint64 data_size = strlen(data) + 1;	// size of the object
 
