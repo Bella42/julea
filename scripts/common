@@ -68,9 +68,13 @@ set_path ()
 set_library_path ()
 {
 	local build_dir
+	local ceph_build_dir
+	local bluestore_dir
 	local old_path
 
 	build_dir="$(get_directory "${SELF_DIR}/..")/bld"
+	bluestore_dir="$(get_directory "${SELF_DIR}/..")/bluestore"
+	ceph_build_dir="$(get_directory "${SELF_DIR}/..")/dependencies/ceph/build"
 	old_path="${LD_LIBRARY_PATH}"
 
 	if test -n "${JULEA_PREFIX}"
@@ -86,6 +90,10 @@ set_library_path ()
 	then
 		LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${old_path}"
 	fi
+
+	LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${bluestore_dir}:${ceph_build_dir}/lib:${ceph_build_dir}/src/rocksdb"
+
+	echo "${LD_LIBRARY_PATH}"
 
 	export LD_LIBRARY_PATH
 }
