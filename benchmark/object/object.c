@@ -365,11 +365,148 @@ benchmark_object_write(BenchmarkRun* run)
 	_benchmark_object_write(run, FALSE, 4 * 1024);
 }
 
+//---------- Write: blocksizes from 4096 to 4096 kiB -----------
+static void
+benchmark_object_write_4k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 4096);
+}
+
+static void
+benchmark_object_write_8k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 8192);
+}
+
+static void
+benchmark_object_write_16k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 16384);
+}
+
+static void
+benchmark_object_write_32k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 32768);
+}
+
+static void
+benchmark_object_write_64k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 65536);
+}
+
+static void
+benchmark_object_write_128k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 131072);
+}
+
+static void
+benchmark_object_write_256k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 262144);
+}
+
+static void
+benchmark_object_write_512k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 524288);
+}
+
+static void
+benchmark_object_write_1024k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 1048576);
+}
+
+static void
+benchmark_object_write_2048k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 2097152);
+}
+
+static void
+benchmark_object_write_4096k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 4194304);
+}
+
+
 static void
 benchmark_object_write_batch(BenchmarkRun* run)
 {
 	_benchmark_object_write(run, TRUE, 4 * 1024);
 }
+
+
+//---------- Write-batch: blocksizes from 4096 to 4096 kiB -----------
+static void
+benchmark_object_write_batch_4k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, TRUE, 4096);
+}
+
+static void
+benchmark_object_write_batch_8k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, TRUE, 8192);
+}
+
+static void
+benchmark_object_write_batch_16k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, TRUE, 16384);
+}
+
+static void
+benchmark_object_write_batch_32k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, TRUE, 32768);
+}
+
+static void
+benchmark_object_write_batch_64k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, TRUE, 65536);
+}
+
+static void
+benchmark_object_write_batch_128k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, TRUE, 131072);
+}
+
+static void
+benchmark_object_write_batch_256k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, TRUE, 262144);
+}
+
+static void
+benchmark_object_write_batch_512k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, TRUE, 524288);
+}
+
+static void
+benchmark_object_write_batch_1024k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 1048576);
+}
+
+static void
+benchmark_object_write_batch_2048k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 2097152);
+}
+
+static void
+benchmark_object_write_batch_4096k(BenchmarkRun* run)
+{
+	_benchmark_object_write(run, FALSE, 4194304);
+}
+
 
 static void
 _benchmark_object_unordered_create_delete(BenchmarkRun* run, gboolean use_batch)
@@ -442,6 +579,31 @@ benchmark_object(void)
 	j_benchmark_add("/object/object/read-batch", benchmark_object_read_batch);
 	j_benchmark_add("/object/object/write", benchmark_object_write);
 	j_benchmark_add("/object/object/write-batch", benchmark_object_write_batch);
+
+	j_benchmark_add("/object/object/write/4kiB", benchmark_object_write_4k);
+	j_benchmark_add("/object/object/write/8kiB", benchmark_object_write_8k);
+	j_benchmark_add("/object/object/write/16kiB", benchmark_object_write_16k);
+	j_benchmark_add("/object/object/write/32kiB", benchmark_object_write_32k);
+	j_benchmark_add("/object/object/write/64kiB", benchmark_object_write_64k);
+	j_benchmark_add("/object/object/write/128kiB", benchmark_object_write_128k);
+	j_benchmark_add("/object/object/write/256kiB", benchmark_object_write_256k);
+	j_benchmark_add("/object/object/write/512kiB", benchmark_object_write_512k);
+	j_benchmark_add("/object/object/write/1024kiB", benchmark_object_write_1024k);
+	j_benchmark_add("/object/object/write/2048kiB", benchmark_object_write_2048k);
+	j_benchmark_add("/object/object/write/4096kiB", benchmark_object_write_4096k);
+
+	j_benchmark_add("/object/object/write-batch/4kiB", benchmark_object_write_batch_4k);
+	j_benchmark_add("/object/object/write-batch/8kiB", benchmark_object_write_batch_8k);
+	j_benchmark_add("/object/object/write-batch/16kiB", benchmark_object_write_batch_16k);
+	j_benchmark_add("/object/object/write-batch/32kiB", benchmark_object_write_batch_32k);
+	j_benchmark_add("/object/object/write-batch/64kiB", benchmark_object_write_batch_64k);
+	j_benchmark_add("/object/object/write-batch/128kiB", benchmark_object_write_batch_128k);
+	j_benchmark_add("/object/object/write-batch/256kiB", benchmark_object_write_batch_256k);
+	j_benchmark_add("/object/object/write-batch/512kiB", benchmark_object_write_batch_512k);
+	j_benchmark_add("/object/object/write-batch/1024kiB", benchmark_object_write_batch_1024k);
+	j_benchmark_add("/object/object/write-batch/2048kiB", benchmark_object_write_batch_2048k);
+	j_benchmark_add("/object/object/write-batch/4096kiB", benchmark_object_write_batch_4096k);
+
 	j_benchmark_add("/object/object/unordered-create-delete", benchmark_object_unordered_create_delete);
 	j_benchmark_add("/object/object/unordered-create-delete-batch", benchmark_object_unordered_create_delete_batch);
 }
