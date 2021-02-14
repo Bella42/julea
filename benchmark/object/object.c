@@ -291,6 +291,7 @@ _benchmark_object_read(BenchmarkRun* run, gboolean use_batch, guint block_size)
 	run->bytes = n * block_size;
 }
 
+//---------- Read: blocksizes from 4096 to 4096 kiB -----------
 static void
 benchmark_object_read(BenchmarkRun* run)
 {
@@ -298,9 +299,145 @@ benchmark_object_read(BenchmarkRun* run)
 }
 
 static void
+benchmark_object_read_4k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 4096);
+}
+
+
+static void
+benchmark_object_read_8k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 8192);
+}
+
+static void
+benchmark_object_read_16k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 16384);
+}
+
+static void
+benchmark_object_read_32k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 32768);
+}
+
+static void
+benchmark_object_read_64k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 65536);
+}
+
+static void
+benchmark_object_read_128k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 131072);
+}
+
+static void
+benchmark_object_read_256k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 262144);
+}
+
+static void
+benchmark_object_read_512k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 524288);
+}
+
+static void
+benchmark_object_read_1024k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 1048576);
+}
+
+static void
+benchmark_object_read_2048k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 2097152);
+}
+
+static void
+benchmark_object_read_4096k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 4194304);
+}
+
+
+
+//---------- Read batch: blocksizes from 4096 to 4096 kiB -----------
+static void
 benchmark_object_read_batch(BenchmarkRun* run)
 {
 	_benchmark_object_read(run, TRUE, 4 * 1024);
+}
+
+static void
+benchmark_object_read_batch_4k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, TRUE, 4096);
+}
+
+static void
+benchmark_object_read_batch_8k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, TRUE, 8192);
+}
+
+static void
+benchmark_object_read_batch_16k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, TRUE, 16384);
+}
+
+static void
+benchmark_object_read_batch_32k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, TRUE, 32768);
+}
+
+static void
+benchmark_object_read_batch_64k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, TRUE, 65536);
+}
+
+static void
+benchmark_object_read_batch_128k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, TRUE, 131072);
+}
+
+static void
+benchmark_object_read_batch_256k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, TRUE, 262144);
+}
+
+static void
+benchmark_object_read_batch_512k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, TRUE, 524288);
+}
+
+static void
+benchmark_object_read_batch_1024k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 1048576);
+}
+
+static void
+benchmark_object_read_batch_2048k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 2097152);
+}
+
+static void
+benchmark_object_read_batch_4096k(BenchmarkRun* run)
+{
+	_benchmark_object_read(run, FALSE, 4194304);
 }
 
 static void
@@ -359,13 +496,13 @@ _benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint block_size)
 	run->bytes = n * block_size;
 }
 
+//---------- Write: blocksizes from 4096 to 4096 kiB -----------
 static void
 benchmark_object_write(BenchmarkRun* run)
 {
 	_benchmark_object_write(run, FALSE, 4 * 1024);
 }
 
-//---------- Write: blocksizes from 4096 to 4096 kiB -----------
 static void
 benchmark_object_write_4k(BenchmarkRun* run)
 {
@@ -433,14 +570,13 @@ benchmark_object_write_4096k(BenchmarkRun* run)
 }
 
 
+//---------- Write-batch: blocksizes from 4096 to 4096 kiB -----------
 static void
 benchmark_object_write_batch(BenchmarkRun* run)
 {
 	_benchmark_object_write(run, TRUE, 4 * 1024);
 }
 
-
-//---------- Write-batch: blocksizes from 4096 to 4096 kiB -----------
 static void
 benchmark_object_write_batch_4k(BenchmarkRun* run)
 {
@@ -577,6 +713,32 @@ benchmark_object(void)
 	/* FIXME get */
 	j_benchmark_add("/object/object/read", benchmark_object_read);
 	j_benchmark_add("/object/object/read-batch", benchmark_object_read_batch);
+
+	j_benchmark_add("/object/object/read/4kiB", benchmark_object_read_4k);
+	j_benchmark_add("/object/object/read/8kiB", benchmark_object_read_8k);
+	j_benchmark_add("/object/object/read/16kiB", benchmark_object_read_16k);
+	j_benchmark_add("/object/object/read/32kiB", benchmark_object_read_32k);
+	j_benchmark_add("/object/object/read/64kiB", benchmark_object_read_64k);
+	j_benchmark_add("/object/object/read/128kiB", benchmark_object_read_128k);
+	j_benchmark_add("/object/object/read/256kiB", benchmark_object_read_256k);
+	j_benchmark_add("/object/object/read/512kiB", benchmark_object_read_512k);
+	j_benchmark_add("/object/object/read/1024kiB", benchmark_object_read_1024k);
+	j_benchmark_add("/object/object/read/2048kiB", benchmark_object_read_2048k);
+	j_benchmark_add("/object/object/read/4096kiB", benchmark_object_read_4096k);
+
+	j_benchmark_add("/object/object/read-batch/4kiB", benchmark_object_read_batch_4k);
+	j_benchmark_add("/object/object/read-batch/8kiB", benchmark_object_read_batch_8k);
+	j_benchmark_add("/object/object/read-batch/16kiB", benchmark_object_read_batch_16k);
+	j_benchmark_add("/object/object/read-batch/32kiB", benchmark_object_read_batch_32k);
+	j_benchmark_add("/object/object/read-batch/64kiB", benchmark_object_read_batch_64k);
+	j_benchmark_add("/object/object/read-batch/128kiB", benchmark_object_read_batch_128k);
+	j_benchmark_add("/object/object/read-batch/256kiB", benchmark_object_read_batch_256k);
+	j_benchmark_add("/object/object/read-batch/512kiB", benchmark_object_read_batch_512k);
+	j_benchmark_add("/object/object/read-batch/1024kiB", benchmark_object_read_batch_1024k);
+	// j_benchmark_add("/object/object/read-batch/2048kiB", benchmark_object_read_batch_2048k);
+	// j_benchmark_add("/object/object/read-batch/4096kiB", benchmark_object_read_batch_4096k);
+
+
 	j_benchmark_add("/object/object/write", benchmark_object_write);
 	j_benchmark_add("/object/object/write-batch", benchmark_object_write_batch);
 
@@ -601,8 +763,8 @@ benchmark_object(void)
 	j_benchmark_add("/object/object/write-batch/256kiB", benchmark_object_write_batch_256k);
 	j_benchmark_add("/object/object/write-batch/512kiB", benchmark_object_write_batch_512k);
 	j_benchmark_add("/object/object/write-batch/1024kiB", benchmark_object_write_batch_1024k);
-	j_benchmark_add("/object/object/write-batch/2048kiB", benchmark_object_write_batch_2048k);
-	j_benchmark_add("/object/object/write-batch/4096kiB", benchmark_object_write_batch_4096k);
+	// j_benchmark_add("/object/object/write-batch/2048kiB", benchmark_object_write_batch_2048k);
+	// j_benchmark_add("/object/object/write-batch/4096kiB", benchmark_object_write_batch_4096k);
 
 	j_benchmark_add("/object/object/unordered-create-delete", benchmark_object_unordered_create_delete);
 	j_benchmark_add("/object/object/unordered-create-delete-batch", benchmark_object_unordered_create_delete_batch);
