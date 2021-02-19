@@ -231,7 +231,14 @@ benchmark_object_status_batch(BenchmarkRun* run)
 static void
 _benchmark_object_read(BenchmarkRun* run, gboolean use_batch, guint block_size)
 {
-	guint const n = (use_batch) ? 10000 : 1000;
+	// guint const n = (use_batch) ? 10000 : 1000;
+	guint n;
+	n = (use_batch) ? 10000 : 1000;
+	
+	if (block_size > 262144)
+	{
+		n = (use_batch) ? 1000 : 100;
+	}
 
 	g_autoptr(JObject) object = NULL;
 	g_autoptr(JBatch) batch = NULL;
@@ -443,7 +450,14 @@ benchmark_object_read_batch_4096k(BenchmarkRun* run)
 static void
 _benchmark_object_write(BenchmarkRun* run, gboolean use_batch, guint block_size)
 {
-	guint const n = (use_batch) ? 10000 : 1000;
+	// guint const n = (use_batch) ? 10000 : 1000;
+	guint n;
+	n = (use_batch) ? 10000 : 1000;
+
+	if (block_size > 262144)
+	{
+		n = (use_batch) ? 1000 : 100;
+	}
 
 	g_autoptr(JObject) object = NULL;
 	g_autoptr(JBatch) batch = NULL;
