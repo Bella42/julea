@@ -2,7 +2,7 @@
 
 #SBATCH -N 1 --ntasks-per-node=48
 #SBATCH --partition=abu-long
-#SBATCH --nodelist=abu2
+#SBATCH --nodelist=abu5
 #SBATCH --error=../results/output/posix-%j.err --output=../results/output/posix-%j.out
 
 
