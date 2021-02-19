@@ -3,7 +3,7 @@
 #SBATCH -N 1 --ntasks-per-node=48
 #SBATCH --partition=abu-long
 #SBATCH --nodelist=abu2
-#SBATCH --error=../../results/output/bluestore-%j.err --output=../../results/output/bluestore-%j.out
+#SBATCH --error=../results/output/bluestore-%j.err --output=../results/output/bluestore-%j.out
 
 
 # ---------------------------------------- BENCHMARK PARAMS ------------------------------------

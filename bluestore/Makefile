@@ -15,7 +15,7 @@ LFLAGS = -L../dependencies/ceph/build/lib -L../dependencies/ceph/build/src/rocks
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
 #   option, something like (this will link in libmylib.so and libm.so:
-LIBS = -lceph-common -lbluefs -lcommon -lpthread -lz -lceph_lz4 -llz4 -los -lcrypto -ldl -lceph_snappy -lsnappy -lcephfs -lkv -lleveldb -lrocksdb -lheap_profiler -laio -ltcmalloc -lglobal -lerasure_code -lblk #-luring
+LIBS = -lceph-common -lbluefs -lcommon -lpthread -lz -lceph_lz4 -llz4 -los -lcrypto -ldl -lceph_snappy -lsnappy -lcephfs -lkv -lleveldb -lrocksdb -lheap_profiler -laio -ltcmalloc -lglobal -lerasure_code -lblk -luring
 
 .PHONY: clean
 
