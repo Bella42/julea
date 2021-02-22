@@ -16,12 +16,6 @@ typedef struct BSColl
     ObjectStore::CollectionHandle ch;
 } BSColl;
 
-ghobject_t make_object(const char* name, int64_t pool) {
-    sobject_t soid{name, CEPH_NOSNAP};
-    uint32_t hash = std::hash<sobject_t>{}(soid);
-    return ghobject_t{hobject_t{soid, "", hash, pool, ""}};
-}
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -47,6 +41,20 @@ int julea_bluestore_mount(void* store) {
     return ostore->mount();
 }
 
+int julea_bluestore_umount(void* store, void* bscoll) {
+    ObjectStore* ostore = (ObjectStore *)store;
+    BSColl* coll = (BSColl *)bscoll;
+    int ret = 0;
+    if (ostore != NULL){
+        coll->ch.reset();
+        ret = ostore->umount();
+    }
+    delete coll;
+    return ret;
+}
+
+// Collection operations
+
 void *julea_bluestore_create_collection(void* store) {
     ObjectStore* ostore = (ObjectStore *)store;
     BSColl* coll = new BSColl;
@@ -68,70 +76,64 @@ void *julea_bluestore_open_collection(void* store) {
     return (void *)coll;
 }
 
-int julea_bluestore_umount(void* store, void* bscoll) {
-    ObjectStore* ostore = (ObjectStore *)store;
+void julea_bluestore_fsync(void* bscoll) {
     BSColl* coll = (BSColl *)bscoll;
-    int ret = 0;
-    if (ostore != NULL){
-        coll->ch.reset();
-        ret = ostore->umount();
-    }
-    delete coll;
-    return ret;
+    coll->ch->flush();
 }
 
 // File operations
 
-int julea_bluestore_create(void* store, void* bscoll, const char* name) {
+void *julea_bluestore_open(const char* name) {
+    ghobject_t *obj = new ghobject_t(hobject_t(sobject_t(string(name), CEPH_NOSNAP)));
+    return (void *)obj;
+}
+
+void *julea_bluestore_create(void* store, void* bscoll, const char* name) {
     ObjectStore* ostore = (ObjectStore *)store;
     BSColl* coll = (BSColl *)bscoll;
-    const uint64_t pool = 4373;
-    ghobject_t obj = make_object(name, pool);
+    ghobject_t *obj = new ghobject_t(hobject_t(sobject_t(string(name), CEPH_NOSNAP)));
     ObjectStore::Transaction t;
-    t.touch(coll->cid, obj);
+    t.touch(coll->cid, *obj);
+    ostore->queue_transaction(coll->ch, std::move(t));
+    return (void *)obj;
+}
+
+int julea_bluestore_delete(void* store, void* bscoll, void* object) {
+    ObjectStore* ostore = (ObjectStore *)store;
+    BSColl* coll = (BSColl *)bscoll;
+    ghobject_t* obj = (ghobject_t *)object;
+    ObjectStore::Transaction t;
+    t.remove(coll->cid, *obj);
     return ostore->queue_transaction(coll->ch, std::move(t));
 }
 
-int julea_bluestore_delete(void* store, void* bscoll, const char* name) {
+int julea_bluestore_write(void* store, void* bscoll, void* object, uint64_t offset, const char* data, uint64_t length) {
     ObjectStore* ostore = (ObjectStore *)store;
     BSColl* coll = (BSColl *)bscoll;
-    const uint64_t pool = 4373;
-    ghobject_t obj = make_object(name, pool);
-    ObjectStore::Transaction t;
-    t.remove(coll->cid, obj);
-    return ostore->queue_transaction(coll->ch, std::move(t));
-}
-
-int julea_bluestore_write(void* store, void* bscoll, const char* name, uint64_t offset, const char* data, uint64_t length) {
-    ObjectStore* ostore = (ObjectStore *)store;
-    BSColl* coll = (BSColl *)bscoll;
-    const uint64_t pool = 4373;
-    ghobject_t obj = make_object(name, pool);
+    ghobject_t* obj = (ghobject_t *)object;
     ObjectStore::Transaction t;
     bufferlist bl;
     bl.append(data, length);
-    t.write(coll->cid, obj, offset, bl.length(), bl);
+    t.write(coll->cid, *obj, offset, bl.length(), bl);
     ostore->queue_transaction(coll->ch, std::move(t));
     return bl.length();
 }
 
-int julea_bluestore_read(void* store, void* bscoll, const char* name, uint64_t offset, char** data_read, uint64_t length) {
+int julea_bluestore_read(void* store, void* bscoll, void* object, uint64_t offset, char** data_read, uint64_t length) {
     ObjectStore* ostore = (ObjectStore *)store;
     BSColl* coll = (BSColl *)bscoll;
-    const uint64_t pool = 4373;
-    ghobject_t obj = make_object(name, pool);
+    ghobject_t* obj = (ghobject_t *)object;
     bufferlist readback;
-    int ret = ostore->read(coll->ch, obj, offset, length, readback);
+    int ret = ostore->read(coll->ch, *obj, offset, length, readback);
     *data_read = readback.c_str();
     return ret;
 }
 
-int julea_bluestore_status(void* store, void* bscoll, const char* name, struct stat* st) {
+int julea_bluestore_status(void* store, void* bscoll, void* object, struct stat* st) {
     ObjectStore* ostore = (ObjectStore *)store;
     BSColl* coll = (BSColl *)bscoll;
-    const uint64_t pool = 4373;
-    ghobject_t obj = make_object(name, pool);
-    return ostore->stat(coll->ch, obj, st);
+    ghobject_t* obj = (ghobject_t *)object;
+    return ostore->stat(coll->ch, *obj, st);
 }
 
 #ifdef __cplusplus
