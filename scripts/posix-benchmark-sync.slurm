@@ -7,7 +7,7 @@
 
 
 # ---------------------------------------- BENCHMARK PARAMS ------------------------------------
-durations="1 2 4 16 32"
+durations="1 2 4 16"
 # durations="1 2 4 8 12 16 32 64 128 256 512"
 runs="1 2 3"
 
@@ -27,74 +27,114 @@ do
 	# --- write objects
 	for duration in $durations
 	do
-			echo " " >> $output
-			echo "# " >> $output
-			echo "# --- /object/object/write ---" >> $output
-			echo "# " >> $output
-			echo -e "# ./scripts/benchmark.sh -p /object/object/write --duration=$duration" -s safety=storage >> $output
-			echo "# " >> $output
+		# --- write objects
+		echo " " >> $output
+		echo "# " >> $output
+		echo "# --- /object/object/write ---" >> $output
+		echo "# " >> $output
+		echo -e "# ./scripts/benchmark.sh -p /object/object/write --duration=$duration" -s safety=storage >> $output
+		echo "# " >> $output
 
-			echo -e ./scripts/benchmark.sh -p /object/object/write --duration=$duration -s safety=storage
+		echo -e ./scripts/benchmark.sh -p /object/object/write --duration=$duration -s safety=storage
 
-			./scripts/benchmark.sh -p /object/object/write --duration=$duration -s safety=storage >> $output
+		./scripts/benchmark.sh -p /object/object/write --duration=$duration -s safety=storage >> $output
 
+		# --- write batched objects
+		echo " " >> $output
+		echo "# " >> $output
+		echo "# --- /object/object/write-batch ---" >> $output
+		echo "# " >> $output
+		echo -e "# ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration" -s safety=storage >> $output
+		echo "# " >> $output
+
+		echo -e ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration  -s safety=storage
+
+		./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration -s safety=storage >> $output
+
+		# --- read objects
+		echo " " >> $output
+		echo "# " >> $output
+		echo "# --- /object/object/read ---" >> $output
+		echo "# " >> $output
+		echo -e "# ./scripts/benchmark.sh -p /object/object/read --duration=$duration" -s safety=storage >> $output
+		echo "# " >> $output
+
+		echo -e ./scripts/benchmark.sh -p /object/object/read --duration=$duration  -s safety=storage
+
+		./scripts/benchmark.sh -p /object/object/read --duration=$duration -s safety=storage >> $output
+
+		# --- read batched objects
+		echo " " >> $output
+		echo "# " >> $output
+		echo "# --- /object/object/read-batch ---" >> $output
+		echo "# " >> $output
+		echo -e "# ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration" -s safety=storage >> $output
+		echo "# " >> $output
+
+		echo -e ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration  -s safety=storage
+
+		./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration -s safety=storage >> $output
 	done
+
+	# done
 
 	# just do be sure there are no space problems the directories are deleted between all 
 	killall julea-server
 	rm -r /tmp/julea-1124/
 	
-	# --- batched write objects
-	for duration in $durations
-	do
-			echo " " >> $output
-			echo "# " >> $output
-			echo "# --- /object/object/write-batch ---" >> $output
-			echo "# " >> $output
-			echo -e "# ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration" -s safety=storage >> $output
-			echo "# " >> $output
+	# # --- batched write objects
+	# for duration in $durations
+	# do
+	# 		echo " " >> $output
+	# 		echo "# " >> $output
+	# 		echo "# --- /object/object/write-batch ---" >> $output
+	# 		echo "# " >> $output
+	# 		echo -e "# ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration" -s safety=storage >> $output
+	# 		echo "# " >> $output
 
-			echo -e ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration  -s safety=storage
+	# 		echo -e ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration  -s safety=storage
 
-			./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration -s safety=storage >> $output
-	done
+	# 		./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration -s safety=storage >> $output
 
-	killall julea-server
-	rm -r /tmp/julea-1124/
 
-	# --- read objects
-	for duration in $durations
-	do
-			echo " " >> $output
-			echo "# " >> $output
-			echo "# --- /object/object/read ---" >> $output
-			echo "# " >> $output
-			echo -e "# ./scripts/benchmark.sh -p /object/object/read --duration=$duration" -s safety=storage >> $output
-			echo "# " >> $output
+	# done
 
-			echo -e ./scripts/benchmark.sh -p /object/object/read --duration=$duration  -s safety=storage
+	# killall julea-server
+	# rm -r /tmp/julea-1124/
 
-			./scripts/benchmark.sh -p /object/object/read --duration=$duration -s safety=storage >> $output
-	done
+	# # --- read objects
+	# for duration in $durations
+	# do
+	# 		echo " " >> $output
+	# 		echo "# " >> $output
+	# 		echo "# --- /object/object/read ---" >> $output
+	# 		echo "# " >> $output
+	# 		echo -e "# ./scripts/benchmark.sh -p /object/object/read --duration=$duration" -s safety=storage >> $output
+	# 		echo "# " >> $output
 
-	killall julea-server
-	rm -r /tmp/julea-1124/
+	# 		echo -e ./scripts/benchmark.sh -p /object/object/read --duration=$duration  -s safety=storage
 
-	# --- batched read objects
-	for duration in $durations
-	do
-			echo " " >> $output
-			echo "# " >> $output
-			echo "# --- /object/object/read-batch ---" >> $output
-			echo "# " >> $output
-			echo -e "# ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration" -s safety=storage >> $output
-			echo "# " >> $output
+	# 		./scripts/benchmark.sh -p /object/object/read --duration=$duration -s safety=storage >> $output
+	# done
 
-			echo -e ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration  -s safety=storage
+	# killall julea-server
+	# rm -r /tmp/julea-1124/
 
-			./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration -s safety=storage >> $output
-	done
+	# # --- batched read objects
+	# for duration in $durations
+	# do
+	# 		echo " " >> $output
+	# 		echo "# " >> $output
+	# 		echo "# --- /object/object/read-batch ---" >> $output
+	# 		echo "# " >> $output
+	# 		echo -e "# ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration" -s safety=storage >> $output
+	# 		echo "# " >> $output
 
-	killall julea-server
-	rm -r /tmp/julea-1124/
+	# 		echo -e ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration  -s safety=storage
+
+	# 		./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration -s safety=storage >> $output
+	# done
+
+	# killall julea-server
+	# rm -r /tmp/julea-1124/
 done
