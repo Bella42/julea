@@ -30,89 +30,123 @@ do
 	mkdir /tmp/julea-1124/
 	mkdir /tmp/julea-1124/bluestore
 
-	# TODO: what about the prep-ceph script?
-
-	# --- write objects
 	for duration in $durations
 	do
-			echo " " >> $output
-			echo "# " >> $output
-			echo "# --- /object/object/write ---" >> $output
-			echo "# " >> $output
-			echo -e "# ./scripts/benchmark.sh -p /object/object/write --duration=$duration" -s safety=storage >> $output
-			echo "# " >> $output
+	# --- write objects
+		echo " " >> $output
+		echo "# " >> $output
+		echo "# --- /object/object/write ---" >> $output
+		echo "# " >> $output
+		echo -e "# ./scripts/benchmark.sh -p /object/object/write --duration=$duration" -s safety=storage >> $output
+		echo "# " >> $output
 
-			echo -e ./scripts/benchmark.sh -p /object/object/write --duration=$duration -s safety=storage
+		echo -e ./scripts/benchmark.sh -p /object/object/write --duration=$duration -s safety=storage
 
-			./scripts/benchmark.sh -p /object/object/write --duration=$duration -s safety=storage >> $output
-
-	done
-
-	killall julea-server
-	# just do be sure there are no space problems the directories are deleted between all 
-	rm -r /tmp/julea-1124/
-	
-	mkdir /tmp/julea-1124/
-	mkdir /tmp/julea-1124/bluestore
+		./scripts/benchmark.sh -p /object/object/write --duration=$duration -s safety=storage >> $output
 
 	# --- batched write objects
-	for duration in $durations
-	do
-			echo " " >> $output
-			echo "# " >> $output
-			echo "# --- /object/object/write-batch ---" >> $output
-			echo "# " >> $output
-			echo -e "# ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration" -s safety=storage >> $output
-			echo "# " >> $output
+		echo " " >> $output
+		echo "# " >> $output
+		echo "# --- /object/object/write-batch ---" >> $output
+		echo "# " >> $output
+		echo -e "# ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration" -s safety=storage >> $output
+		echo "# " >> $output
 
-			echo -e ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration -s safety=storage
+		echo -e ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration -s safety=storage
 
-			./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration -s safety=storage >> $output
-	done
-
-	killall julea-server
-	rm -r /tmp/julea-1124/
-	
-	mkdir /tmp/julea-1124/
-	mkdir /tmp/julea-1124/bluestore
+		./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration -s safety=storage >> $output
 
 	# --- read objects
-	for duration in $durations
-	do
-			echo " " >> $output
-			echo "# " >> $output
-			echo "# --- /object/object/read ---" >> $output
-			echo "# " >> $output
-			echo -e "# ./scripts/benchmark.sh -p /object/object/read --duration=$duration" -s safety=storage >> $output
-			echo "# " >> $output
+		echo " " >> $output
+		echo "# " >> $output
+		echo "# --- /object/object/read ---" >> $output
+		echo "# " >> $output
+		echo -e "# ./scripts/benchmark.sh -p /object/object/read --duration=$duration" -s safety=storage >> $output
+		echo "# " >> $output
 
-			echo -e ./scripts/benchmark.sh -p /object/object/read --duration=$duration -s safety=storage
+		echo -e ./scripts/benchmark.sh -p /object/object/read --duration=$duration -s safety=storage
 
-			./scripts/benchmark.sh -p /object/object/read --duration=$duration -s safety=storage >> $output
-	done
-
-	killall julea-server
-	rm -r /tmp/julea-1124/
-	
-	mkdir /tmp/julea-1124/
-	mkdir /tmp/julea-1124/bluestore
+		./scripts/benchmark.sh -p /object/object/read --duration=$duration -s safety=storage >> $output
 
 	# --- batched read objects
-	for duration in $durations
-	do
-			echo " " >> $output
-			echo "# " >> $output
-			echo "# --- /object/object/read-batch ---" >> $output
-			echo "# " >> $output
-			echo -e "# ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration" -s safety=storage >> $output
-			echo "# " >> $output
+		echo " " >> $output
+		echo "# " >> $output
+		echo "# --- /object/object/read-batch ---" >> $output
+		echo "# " >> $output
+		echo -e "# ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration" -s safety=storage >> $output
+		echo "# " >> $output
 
-			echo -e ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration -s safety=storage
+		echo -e ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration -s safety=storage
 
-			./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration -s safety=storage >> $output
+		./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration -s safety=storage >> $output
+
 	done
 
-	killall julea-server
-	rm -r /tmp/julea-1124/
+	# killall julea-server
+	# just do be sure there are no space problems the directories are deleted between all 
+	# rm -r /tmp/julea-1124/
+	
+	# mkdir /tmp/julea-1124/
+	# mkdir /tmp/julea-1124/bluestore
+
+	# # --- batched write objects
+	# for duration in $durations
+	# do
+	# 	echo " " >> $output
+	# 	echo "# " >> $output
+	# 	echo "# --- /object/object/write-batch ---" >> $output
+	# 	echo "# " >> $output
+	# 	echo -e "# ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration" -s safety=storage >> $output
+	# 	echo "# " >> $output
+
+	# 	echo -e ./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration -s safety=storage
+
+	# 	./scripts/benchmark.sh -p /object/object/write-batch --duration=$duration -s safety=storage >> $output
+	# done
+
+	# killall julea-server
+	# rm -r /tmp/julea-1124/
+	
+	# mkdir /tmp/julea-1124/
+	# mkdir /tmp/julea-1124/bluestore
+
+	# # --- read objects
+	# for duration in $durations
+	# do
+	# 	echo " " >> $output
+	# 	echo "# " >> $output
+	# 	echo "# --- /object/object/read ---" >> $output
+	# 	echo "# " >> $output
+	# 	echo -e "# ./scripts/benchmark.sh -p /object/object/read --duration=$duration" -s safety=storage >> $output
+	# 	echo "# " >> $output
+
+	# 	echo -e ./scripts/benchmark.sh -p /object/object/read --duration=$duration -s safety=storage
+
+	# 	./scripts/benchmark.sh -p /object/object/read --duration=$duration -s safety=storage >> $output
+	# done
+
+	# killall julea-server
+	# rm -r /tmp/julea-1124/
+	
+	# mkdir /tmp/julea-1124/
+	# mkdir /tmp/julea-1124/bluestore
+
+	# # --- batched read objects
+	# for duration in $durations
+	# do
+	# 	echo " " >> $output
+	# 	echo "# " >> $output
+	# 	echo "# --- /object/object/read-batch ---" >> $output
+	# 	echo "# " >> $output
+	# 	echo -e "# ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration" -s safety=storage >> $output
+	# 	echo "# " >> $output
+
+	# 	echo -e ./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration -s safety=storage
+
+	# 	./scripts/benchmark.sh -p /object/object/read-batch --duration=$duration -s safety=storage >> $output
+	# done
+
+	# killall julea-server
+	# rm -r /tmp/julea-1124/
 	
 done
