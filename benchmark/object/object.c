@@ -749,8 +749,8 @@ benchmark_object(void)
 	j_benchmark_add("/object/object/read-batch/256kiB", benchmark_object_read_batch_256k);
 	j_benchmark_add("/object/object/read-batch/512kiB", benchmark_object_read_batch_512k);
 	j_benchmark_add("/object/object/read-batch/1024kiB", benchmark_object_read_batch_1024k);
-	// j_benchmark_add("/object/object/read-batch/2048kiB", benchmark_object_read_batch_2048k);
-	// j_benchmark_add("/object/object/read-batch/4096kiB", benchmark_object_read_batch_4096k);
+	j_benchmark_add("/object/object/read-batch/2048kiB", benchmark_object_read_batch_2048k);
+	j_benchmark_add("/object/object/read-batch/4096kiB", benchmark_object_read_batch_4096k);
 
 
 	j_benchmark_add("/object/object/write", benchmark_object_write);
@@ -777,8 +777,8 @@ benchmark_object(void)
 	j_benchmark_add("/object/object/write-batch/256kiB", benchmark_object_write_batch_256k);
 	j_benchmark_add("/object/object/write-batch/512kiB", benchmark_object_write_batch_512k);
 	j_benchmark_add("/object/object/write-batch/1024kiB", benchmark_object_write_batch_1024k);
-	// j_benchmark_add("/object/object/write-batch/2048kiB", benchmark_object_write_batch_2048k);
-	// j_benchmark_add("/object/object/write-batch/4096kiB", benchmark_object_write_batch_4096k);
+	j_benchmark_add("/object/object/write-batch/2048kiB", benchmark_object_write_batch_2048k);
+	j_benchmark_add("/object/object/write-batch/4096kiB", benchmark_object_write_batch_4096k);
 
 	j_benchmark_add("/object/object/unordered-create-delete", benchmark_object_unordered_create_delete);
 	j_benchmark_add("/object/object/unordered-create-delete-batch", benchmark_object_unordered_create_delete_batch);
