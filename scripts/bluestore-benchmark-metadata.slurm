@@ -48,7 +48,7 @@ do
 
 		echo -e ./scripts/benchmark.sh -p /object/object --duration=$duration 
 
-		./scripts/benchmark.sh -p /object/object --duration=$duration >> $output
+		./scripts/benchmark.sh -p /object/object --duration=$duration >> $output_unsync
 
 	# --- synced
 		echo " " >> $output_sync
